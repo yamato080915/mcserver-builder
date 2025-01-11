@@ -1,5 +1,11 @@
-import os, urllib.request as urllib, requests, time
+import os, urllib.request as urllib, requests, time, shutil
 from tqdm import tqdm
+
+bar = ""
+def reporthook(block, bs, size):
+    if size <=0:return
+    bar.total = size
+    bar.update(block*bs if block*bs<=size else size)
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip"
@@ -16,13 +22,7 @@ print("installing mcserver-updater")
 if not os.path.isdir("__cache__"):
     os.mkdir("__cache__")
 
-bar = tqdm()
-def reporthook(block, bs, size):
-    if size <=0:return
-    bar.total = size
-    bar.update(block*bs if block*bs<=size else size)
-
-urllib.urlretrieve(filename="updater.zip", url=urls["updater"])
+urllib.urlretrieve(filename="__cache__/updater.zip", url=urls["updater"])
 
 proxy = input("Do you want to build a proxy server?(Y/n)")
 if proxy=="Y" or proxy=="y":proxy = True
