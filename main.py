@@ -1,4 +1,4 @@
-import os, requests, shutil, json, subprocess, sys
+import os, requests, shutil, json, subprocess, sys, yaml
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip"
@@ -24,7 +24,7 @@ shutil.unpack_archive("__cache__/updater.zip", "./__cache__")
 shutil.move("__cache__/mcserver-updater-main/main.py", "./updater.py")
 shutil.move("__cache__/mcserver-updater-main/README.md", "./README.md")
 
-if os.path.isdir("proxy"):
+if os.path.isdir("proxy") and os.path.isfile("proxy/forwarding.secret"):
     proxy = True
 else:
     proxy = input("Do you want to build a proxy server?(Default Y)(Y/n)")
@@ -57,6 +57,9 @@ else:
         with open("velocity.toml", "w", encoding="utf-8") as f:
             f.write(text)
 
+with open("forwarding.secret", "r", encoding="utf-8") as f:
+    secret = f.read()
+
 def add_server():
     os.chdir(cwd)
     servername = input("server name(default lobby):")
@@ -80,7 +83,18 @@ def add_server():
         properties = f.read().splitlines()
     text = ""
     for i, e in enumerate(properties):
-        pass#TODO
+        if "online-mode" in e:
+            properties[i] = "online-mode=false"
+            print("set online-mode=false")
+        text += f"{properties[i]}"
+    with open("server.properties", "w", encoding="utf-8") as f:
+        f.write(text)
+    if os.path.isfile("paper.yml"):yml = "paper.yml"
+    else:yml = "config/paper-global.yml"
+    with open(yml, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    config["proxies"]["velocity"]["enabled"] = True
+    config["proxies"]["velocity"]["online-mode"] = True
 
 #"config/paper-global.yml" or "paper.yml"#TODO
-#add_server()
+add_server()
