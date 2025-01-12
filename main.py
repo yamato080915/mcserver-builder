@@ -1,4 +1,4 @@
-import os, requests, shutil, json, subprocess, sys, yaml
+import os, requests, shutil, json, subprocess, sys, yaml, toml
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip"
@@ -43,19 +43,11 @@ else:
         os.chdir("proxy")
         p = subprocess.Popen(["java", "-Xmx512M", "-Xms512M", "-jar", "server.jar"], stdin=subprocess.PIPE, shell=True)
         p.communicate(input="end".encode())
-        with open("velocity.toml", "r", encoding="utf-8") as f:
-            velocity = f.read().splitlines()
-        text = ""
-        for i, e in enumerate(velocity):
-            if "player-info-forwarding-mode" in e:
-                velocity[i] = 'player-info-forwarding-mode = "modern"'
-                print('set player-info-forwarding-mode = "modern"')
-            elif "force-key-authentication" in e:
-                velocity[i] = "force-key-authentication = false"
-                print("set force-key-authentication = false")
-            text += f"\n{velocity[i]}"
-        with open("velocity.toml", "w", encoding="utf-8") as f:
-            f.write(text)
+        velocity = toml.load(open("velocity.toml"))
+        velocity["player-info-forwarding-mode"] = "modern"
+        velocity["force-key-authentication"] = False
+        velocity["servers"] = {}
+        toml.dump(velocity, open('velocity.toml', mode='w'))
 
 with open("forwarding.secret", "r", encoding="utf-8") as f:
     secret = f.read()
@@ -79,30 +71,48 @@ def add_server():
     os.chdir(servername)
     p = subprocess.Popen(["java", "-Xmx4G", "-Xms4G", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, shell=True)
     p.communicate(input="stop".encode())
-    with open("server.properties", "r", encoding="utf-8") as f:
-        properties = f.read().splitlines()
-    text = ""
-    for i, e in enumerate(properties):
-        if "online-mode" in e:
-            properties[i] = "online-mode=false"
-            print("set online-mode=false")
-        text += f"{properties[i]}"
-    with open("server.properties", "w", encoding="utf-8") as f:
-        f.write(text)
-    if os.path.isfile("paper.yml"):yml = "paper.yml"
-    else:yml = "config/paper-global.yml"
-    with open(yml, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-    print("set paper.yml")
-    if yml == "paper.yml":
-        config["settings"]["velocity-support"]["enabled"] = True
-        config["settings"]["velocity-support"]["online-mode"] = True
-        config["settings"]["velocity-support"]["secret"] = secret
-    else:
-        config["proxies"]["velocity"]["enabled"] = True
-        config["proxies"]["velocity"]["online-mode"] = True
-        config["proxies"]["velocity"]["secret"] = secret
-    with open(yml, "w", encoding="utf-8") as f:
-        yaml.safe_dump(config, f)
+    if proxy:
+        with open("server.properties", "r", encoding="utf-8") as f:
+            properties = f.read().splitlines()
+        text = ""
+        for i, e in enumerate(properties):
+            if "online-mode" in e:
+                properties[i] = "online-mode=false"
+                print("set online-mode=false")
+            text += f"\n{properties[i]}"
+        with open("server.properties", "w", encoding="utf-8") as f:
+            f.write(text)
+        if os.path.isfile("paper.yml"):yml = "paper.yml"
+        else:yml = "config/paper-global.yml"
+        with open(yml, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+        print("set paper.yml")
+        if yml == "paper.yml":
+            config["settings"]["velocity-support"]["enabled"] = True
+            config["settings"]["velocity-support"]["online-mode"] = True
+            config["settings"]["velocity-support"]["secret"] = secret
+        else:
+            config["proxies"]["velocity"]["enabled"] = True
+            config["proxies"]["velocity"]["online-mode"] = True
+            config["proxies"]["velocity"]["secret"] = secret
+        with open(yml, "w", encoding="utf-8") as f:
+            yaml.safe_dump(config, f)
+        os.chdir("../proxy")
+        velocity = toml.load(open("velocity.toml"))
+        if [] == list(velocity["servers"].values()):
+            velocity["servers"][servername] = "127.0.0.1:25566"
+            velocity["servers"]["try"] = [servername]
+        else:
+            velocity["servers"][servername] = f"127.0.0.1:{25565 + len(list(velocity["servers"].values()))}"
+        toml.dump(velocity, open('velocity.toml', mode='w'))
+        os.chdir(f"../{servername}")
+        for i, e in enumerate(properties):
+            if "server-port" in e:
+                properties[i] = f"server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}"
+                print(f"set {servername} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}")
+            text += f"\n{properties[i]}"
+        with open("server.properties", "w", encoding="utf-8") as f:
+            f.write(text)
 
 add_server()
+#TODO JDK Version
