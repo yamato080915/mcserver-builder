@@ -68,7 +68,7 @@ def add_server():
     jsonData = {"file": f"{servername}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": True if version=="" or version=="latest" else False}
     with open(f"{servername}.json", "w", encoding="utf-8") as f:
         json.dump(jsonData, f, indent=4)
-    cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    java -Xmx4G -Xms4G -jar server.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
+    cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    java -Xmx4G -Xms4G -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
     with open(f"./{servername}.cmd", "w", encoding="utf-8") as f:
         f.write(cmdData)
     if not os.path.isdir(servername):os.mkdir(servername)
@@ -93,8 +93,16 @@ def add_server():
     else:yml = "config/paper-global.yml"
     with open(yml, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
-    config["proxies"]["velocity"]["enabled"] = True
-    config["proxies"]["velocity"]["online-mode"] = True
+    print("set paper.yml")
+    if yml == "paper.yml":
+        config["settings"]["velocity-support"]["enabled"] = True
+        config["settings"]["velocity-support"]["online-mode"] = True
+        config["settings"]["velocity-support"]["secret"] = secret
+    else:
+        config["proxies"]["velocity"]["enabled"] = True
+        config["proxies"]["velocity"]["online-mode"] = True
+        config["proxies"]["velocity"]["secret"] = secret
+    with open(yml, "w", encoding="utf-8") as f:
+        yaml.safe_dump(config, f)
 
-#"config/paper-global.yml" or "paper.yml"#TODO
 add_server()
