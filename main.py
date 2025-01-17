@@ -48,7 +48,6 @@ os.mkdir("__cache__")
 
 versions = list(json.loads(requests.get(urls["purpur"]).text)["versions"])
 jdkpath = {"..\\jdk\\jdk11\\bin\\java": versions[:versions.index("1.16.4")+1], "..\\jdk\\jdk16\\bin\\java": ["1.16.5"], "..\\jdk\\jdk17\\bin\\java": versions[versions.index("1.16.5")+1:versions.index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": versions[versions.index("1.19.3"):]}
-print(jdkpath)
 
 if os.path.isfile("updater.py"):print("updating mcserver-updater")
 else:print("installing mcserver-updater")
@@ -92,7 +91,9 @@ def add_server():
     servername = input("server name(default lobby):")
     if servername == "":servername = "lobby"
     version = input("minecraft version(default latest):")
-    jsonData = {"file": f"{servername}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": True if version=="" or version=="latest" else False}
+    if version=="latest":version = ""
+    jsonData = {"file": f"{servername}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": True if version=="" else False}
+    if version == "":version = versions[-1]
     with open(f"{servername}.json", "w", encoding="utf-8") as f:
         json.dump(jsonData, f, indent=4)
     path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk16\\bin\\java" if jdkpath["..\\jdk\\jdk16\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
@@ -107,6 +108,7 @@ def add_server():
     os.chdir(servername)
     p = subprocess.Popen([path, "-Xmx4G", "-Xms4G", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, shell=True)
     p.communicate(input="stop".encode())
+    p.wait()
     if proxy:
         with open("server.properties", "r", encoding="utf-8") as f:
             properties = f.read().splitlines()
@@ -135,6 +137,7 @@ def add_server():
             yaml.safe_dump(config, f)
         os.chdir("../proxy")
         velocity = toml.load(open("velocity.toml"))
+        velocity["forced-hosts"] = {}
         if [] == list(velocity["servers"].values()):
             velocity["servers"][servername] = "127.0.0.1:25566"
             velocity["servers"]["try"] = [servername]
