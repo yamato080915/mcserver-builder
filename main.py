@@ -7,7 +7,6 @@ urls = {
     "jdk": [
         ["jdk21", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/21.0.5+11/openlogic-openjdk-21.0.5+11-windows-x64.zip", "openlogic-openjdk-21.0.5+11-windows-x64"], 
         ["jdk17", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/17.0.13+11/openlogic-openjdk-17.0.13+11-windows-x64.zip", "openlogic-openjdk-17.0.13+11-windows-x64"], 
-        ["jdk16", "https://download.java.net/java/GA/jdk16.0.2/d4a915d82b4c4fbb9bde534da945d746/7/GPL/openjdk-16.0.2_windows-x64_bin.zip", "jdk-16.0.2"], 
         ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.25+9/openlogic-openjdk-11.0.25+9-windows-x64.zip", "openlogic-openjdk-11.0.25+9-windows-x64"],
         ["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u432-b06/openlogic-openjdk-8u432-b06-windows-x64.zip", "openlogic-openjdk-8u432-b06-windows-x64"]
         ], 
@@ -47,7 +46,7 @@ shutil.rmtree("__cache__")
 os.mkdir("__cache__")
 
 versions = list(json.loads(requests.get(urls["purpur"]).text)["versions"])
-jdkpath = {"..\\jdk\\jdk11\\bin\\java": versions[:versions.index("1.16.4")+1], "..\\jdk\\jdk16\\bin\\java": ["1.16.5"], "..\\jdk\\jdk17\\bin\\java": versions[versions.index("1.16.5")+1:versions.index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": versions[versions.index("1.19.3"):]}
+jdkpath = {"..\\jdk\\jdk11\\bin\\java": versions[:versions.index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": versions[versions.index("1.16.5")+1:versions.index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": versions[versions.index("1.19.3"):]}
 
 if os.path.isfile("updater.py"):print("updating mcserver-updater")
 else:print("installing mcserver-updater")
@@ -96,7 +95,7 @@ def add_server():
     if version == "":version = versions[-1]
     with open(f"{servername}.json", "w", encoding="utf-8") as f:
         json.dump(jsonData, f, indent=4)
-    path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk16\\bin\\java" if jdkpath["..\\jdk\\jdk16\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
+    path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
     cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    {path} -Xmx4G -Xms4G -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
     with open(f"./{servername}.cmd", "w", encoding="utf-8") as f:
         f.write(cmdData)
