@@ -107,7 +107,7 @@ def add_server():
     if version == "":version = versions[-1]
     with open(f"{servername}.json", "w", encoding="utf-8") as f:
         json.dump(jsonData, f, indent=4)
-    path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else  "..\\jdk\\jdk11\\bin\\java"
+    path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
     if os.name!="nt":path = path.replace("\\", "/")
     cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    {path} -Xmx4G -Xms4G -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
     with open(f"./{servername}.cmd", "w", encoding="utf-8") as f:
