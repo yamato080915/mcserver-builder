@@ -68,6 +68,7 @@ shutil.move("__cache__/mcserver-updater-main/README.md", "./README.md")
 
 if os.path.isdir("proxy") and os.path.isfile("proxy/forwarding.secret"):
     proxy = True
+    os.chdir("proxy")
 else:
     proxy = input("Do you want to build a proxy server?(Default Y)(Y/n)")
     if proxy.upper()=="Y" or proxy == "":proxy = True
@@ -89,10 +90,12 @@ else:
         velocity["player-info-forwarding-mode"] = "modern"
         velocity["force-key-authentication"] = False
         velocity["servers"] = {}
+        velocity["forced-hosts"] = {}
         toml.dump(velocity, open('velocity.toml', mode='w'))
-
-with open("forwarding.secret", "r", encoding="utf-8") as f:
-    secret = f.read()
+if proxy:
+    with open("forwarding.secret", "r", encoding="utf-8") as f:
+        secret = f.read()
+else:secret = ""
 
 def add_server():
     os.chdir(cwd)
@@ -146,7 +149,6 @@ def add_server():
             yaml.safe_dump(config, f)
         os.chdir("../proxy")
         velocity = toml.load(open("velocity.toml"))
-        velocity["forced-hosts"] = {}
         if [] == list(velocity["servers"].values()):
             velocity["servers"][servername] = "127.0.0.1:25566"
             velocity["servers"]["try"] = [servername]
