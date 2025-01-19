@@ -144,6 +144,7 @@ def add_server():
             velocity["servers"][servername] = f"127.0.0.1:{25565 + len(list(velocity["servers"].values()))}"
         toml.dump(velocity, open('velocity.toml', mode='w'))
         os.chdir(f"../{servername}")
+        text = ""
         for i, e in enumerate(properties):
             if "server-port" in e:
                 properties[i] = f"server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}"
