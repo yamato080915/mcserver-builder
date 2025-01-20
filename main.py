@@ -70,7 +70,7 @@ else:
     else:proxy = False
     if proxy:
         if not os.path.isdir("proxy"):os.mkdir("proxy")
-        jsonData = {"file": "./proxy/server.jar", "software": "velocity", "version": "", "build": 0}
+        jsonData = {"file": "./proxy/server.jar", "software": "velocity", "version": "", "build": 0, "jdk": "..\\jdk\\jdk21\\bin\\java".replace("\\","/" if OS!="Windows" else "\\"), "RAM": "512M"}
         with open("proxy.json", "w", encoding="utf-8") as f:
             json.dump(jsonData, f, indent=4)
         cmdData = "@echo off\npy updater.py proxy.json\nIF %ERRORLEVEL% == 0 (\n    cd proxy\n    ..\\jdk\\jdk21\\bin\\java -Xmx512M -Xms512M -jar server.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
@@ -100,10 +100,12 @@ def add_server():
     if version=="latest":version = ""
     jsonData = {"file": f"{servername}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": True if version=="" else False}
     if version == "":version = versions[-1]
-    with open(f"{servername}.json", "w", encoding="utf-8") as f:
-        json.dump(jsonData, f, indent=4)
     path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
     if OS!="Windows":path = path.replace("\\", "/")
+    jsonData["jdk"] = path
+    jsonData["RAM"] = "4G"
+    with open(f"{servername}.json", "w", encoding="utf-8") as f:
+        json.dump(jsonData, f, indent=4)
     cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    {path} -Xmx4G -Xms4G -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
     with open(f"./{servername}.cmd", "w", encoding="utf-8") as f:
         f.write(cmdData)
