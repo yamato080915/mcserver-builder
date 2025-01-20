@@ -1,36 +1,31 @@
-import os, requests, shutil, json, subprocess, sys, yaml, toml
+import os, requests, shutil, json, subprocess, sys, yaml, toml, platform
 from tqdm import tqdm
-import urllib.request
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip", 
     "purpur": "https://api.purpurmc.org/v2/purpur/"
 }
 jdkurls = {
-    "windows": [
+    "Windows": [
         ["jdk21", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/21.0.5+11/openlogic-openjdk-21.0.5+11-windows-x64.zip", "openlogic-openjdk-21.0.5+11-windows-x64"], 
         ["jdk17", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/17.0.13+11/openlogic-openjdk-17.0.13+11-windows-x64.zip", "openlogic-openjdk-17.0.13+11-windows-x64"], 
         ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.25+9/openlogic-openjdk-11.0.25+9-windows-x64.zip", "openlogic-openjdk-11.0.25+9-windows-x64"],
         ["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u432-b06/openlogic-openjdk-8u432-b06-windows-x64.zip", "openlogic-openjdk-8u432-b06-windows-x64"]
         ], 
-    "linux":[
+    "Linux":[
         ["jdk21", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/21.0.5+11/openlogic-openjdk-21.0.5+11-linux-x64.tar.gz", "openlogic-openjdk-21.0.5+11-linux-x64"], 
         ["jdk17", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/17.0.13+11/openlogic-openjdk-17.0.13+11-linux-x64.tar.gz", "openlogic-openjdk-17.0.13+11-linux-x64"], 
         ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.25+9/openlogic-openjdk-11.0.25+9-linux-x64.tar.gz", "openlogic-openjdk-11.0.25+9-linux-x64"],
         ["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u432-b06/openlogic-openjdk-8u432-b06-linux-x64.tar.gz", "openlogic-openjdk-8u432-b06-linux-x64"]
         ]
 }
-pypath = f"py{"thon" if os.name!="nt" else ""}"
-#----debug----#TODO
-#print(json.loads(requests.get(urls["purpur"]).text)["versions"])
-#/---debug ---/
-#"""#TODO
-if os.name == "nt":
-    urls["jdk"] = jdkurls["windows"]
-else:
-    urls["jdk"] = jdkurls["linux"]
-#"""
-#urls["jdk"] = jdkurls["linux"]
+OS = platform.system()
+pypath = f"py{"thon" if OS!="Windows" else ""}"
+
+if not OS in list(jdkurls.keys()):
+    sys.exit("Unsupported OS")
+
+urls["jdk"] = jdkurls[OS]
 
 folder = input("server folder:")
 if not os.path.isdir(folder):os.mkdir(folder)
@@ -43,12 +38,12 @@ if not os.path.isdir("jdk"):os.mkdir("jdk")
 for i in tqdm(urls["jdk"], total=4, desc="jdk", unit="files"):
     if not os.path.isdir(f"jdk/{i[0]}"):
         r = requests.get(i[1], stream=True)
-        with open(f"__cache__/{i[0]}.{"zip" if os.name=="nt" else "tar.gz"}", "wb") as f:
+        with open(f"__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}", "wb") as f:
             for chunk in tqdm(r.iter_content(chunk_size=1024), total=round(int(r.headers.get('content-length', -1))/(1024)), unit="KB", desc=i[2], leave=False):
                 if chunk:
                     f.write(chunk)
                     f.flush()
-        shutil.unpack_archive(f"__cache__/{i[0]}.{"zip" if os.name=="nt" else "tar.gz"}", "jdk")
+        shutil.unpack_archive(f"__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}", "jdk")
         shutil.move(f"./jdk/{i[2]}", f"./jdk/{i[0]}")
 
 shutil.rmtree("__cache__")
@@ -84,7 +79,7 @@ else:
         p = subprocess.Popen([pypath, "updater.py", "proxy.json"])
         p.wait()
         os.chdir("proxy")
-        p = subprocess.Popen(["..\\jdk\\jdk21\\bin\\java".replace("\\", "/" if os.name!="nt" else "\\"), "-Xmx512M", "-Xms512M", "-jar", "server.jar"], stdin=subprocess.PIPE, shell=os.name=="nt")
+        p = subprocess.Popen(["..\\jdk\\jdk21\\bin\\java".replace("\\", "/" if OS!="Windows" else "\\"), "-Xmx512M", "-Xms512M", "-jar", "server.jar"], stdin=subprocess.PIPE, shell=OS=="Windows")
         p.communicate(input="end".encode())
         velocity = toml.load(open("velocity.toml"))
         velocity["player-info-forwarding-mode"] = "modern"
@@ -108,7 +103,7 @@ def add_server():
     with open(f"{servername}.json", "w", encoding="utf-8") as f:
         json.dump(jsonData, f, indent=4)
     path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
-    if os.name!="nt":path = path.replace("\\", "/")
+    if OS!="Windows":path = path.replace("\\", "/")
     cmdData = f"@echo off\npy updater.py {servername}.json\nIF %ERRORLEVEL% == 0 (\n    cd {servername}\n    {path} -Xmx4G -Xms4G -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
     with open(f"./{servername}.cmd", "w", encoding="utf-8") as f:
         f.write(cmdData)
@@ -118,7 +113,7 @@ def add_server():
     p = subprocess.Popen([pypath, "updater.py", f"{servername}.json"])
     p.wait()
     os.chdir(servername)
-    p = subprocess.Popen([path, "-Xmx4G", "-Xms4G", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, shell=os.name=="nt")
+    p = subprocess.Popen([path, "-Xmx4G", "-Xms4G", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, shell=OS=="Windows")
     p.communicate(input="stop".encode())
     p.wait()
     if proxy:
