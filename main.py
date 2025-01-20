@@ -1,6 +1,5 @@
 import os, requests, shutil, json, subprocess, sys, yaml, toml, platform
 from tqdm import tqdm
-import urllib.request
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip", 
@@ -22,16 +21,11 @@ jdkurls = {
 }
 OS = platform.system()
 pypath = f"py{"thon" if OS!="Windows" else ""}"
-#----debug----#TODO
-#print(json.loads(requests.get(urls["purpur"]).text)["versions"])
-#/---debug ---/
-#"""#TODO
+
 if not OS in list(jdkurls.keys()):
     sys.exit("Unsupported OS")
 
 urls["jdk"] = jdkurls[OS]
-#"""
-#urls["jdk"] = jdkurls["linux"]
 
 folder = input("server folder:")
 if not os.path.isdir(folder):os.mkdir(folder)
