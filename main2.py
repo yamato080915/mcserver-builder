@@ -96,6 +96,7 @@ class build:
         os.chdir(self.cwd)
         if version=="":version = self.versions[-1]
         self.path = "..\\jdk\\jdk21\\bin\\java" if version in self.jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
+        if OS!="Windows":self.path = self.path.replace("\\", "/")
         self.jsonData = {"file": f"{name}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": False, "jdk": self.path, "RAM": ram}
         with open(f"{name}.json", "w", encoding="utf-8") as f:
             json.dump(self.jsonData, f, indent=4)
