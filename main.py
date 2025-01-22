@@ -98,6 +98,9 @@ def add_server():
     if servername == "":servername = "lobby"
     version = input("minecraft version(default latest):")
     if version=="latest":version = ""
+    if not(version=="" or version in versions):
+        print(f"ver:{version} is not exist.\nversion-list:{versions}")
+        return
     jsonData = {"file": f"{servername}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": True if version=="" else False}
     if version == "":version = versions[-1]
     path = "..\\jdk\\jdk21\\bin\\java" if version in jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
