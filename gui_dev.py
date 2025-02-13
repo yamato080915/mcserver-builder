@@ -74,9 +74,10 @@ class build:
         shutil.move("__cache__/mcserver-updater-main/main.py", "./updater.py")
         shutil.move("__cache__/mcserver-updater-main/README.md", "./README.md")
         root.app.pbar0["value"]+=1
-    def insert(self, box, text):
+    def insert(self, state, box, text):
         box.config(state="normal")
         box.insert('end', text)
+        root.bottom["text"] = f"{state}{text.replace("\n", "")}"#[:30]}{"" if len(text)<=30 else "..."}"
         box.config(state="disabled")
     def build_proxy(self):
         root.app.proxylbl["text"] = "Building Velocity Server..."
@@ -89,14 +90,21 @@ class build:
         cmdData = "@echo off\npy updater.py proxy.json\nIF %ERRORLEVEL% == 0 (\n    cd proxy\n    ..\\jdk\\jdk21\\bin\\java -Xmx512M -Xms512M -jar server.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
         with open("./proxy.cmd", "w", encoding="utf-8") as f:
             f.write(cmdData)
-        p = subprocess.Popen([pypath, "updater.py", "proxy.json"], stdout=subprocess.PIPE)
+        p = subprocess.Popen([pypath, "updater.py", "proxy.json"], stdout=subprocess.PIPE, text=True)
+        for line in iter(p.stdout.readline, ''):
+            try:
+                line = line.strip()
+                self.insert("Building velocity...", root.app.proxylog, line + '\n')
+                root.app.proxylog.see(tk.END)
+            except:
+                break
         p.wait()
         os.chdir("proxy")
         p = subprocess.Popen(["..\\jdk\\jdk21\\bin\\java".replace("\\", "/" if OS!="Windows" else "\\"), "-Xmx512M", "-Xms512M", "-jar", "server.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
-                self.insert(root.app.proxylog, line + '\n')
+                self.insert("Building velocity...", root.app.proxylog, line + '\n')
                 root.app.proxylog.see(tk.END)
                 if "Done" in line:
                     break
@@ -112,9 +120,9 @@ class build:
     def proxy_setting(self):
         velocity = toml.load(open("velocity.toml"))
         velocity["player-info-forwarding-mode"] = "modern"
-        self.insert(root.app.proxylog, 'set player-info-forwarding-mode to modern\n')
+        self.insert("Setting velocity...", root.app.proxylog, 'set player-info-forwarding-mode to modern\n')
         velocity["force-key-authentication"] = False
-        self.insert(root.app.proxylog, 'set force-key-authentication to false\n')
+        self.insert("Setting velocity...", root.app.proxylog, 'set force-key-authentication to false\n')
         root.app.proxylog.see(tk.END)
         velocity["servers"] = {}
         velocity["forced-hosts"] = {}
@@ -138,13 +146,20 @@ class build:
         with open(f"{name}/eula.txt", "w", encoding="utf-8") as f:
             f.write("eula=true")
         p = subprocess.Popen([pypath, "updater.py", f"{name}.json"])
+        for line in iter(p.stdout.readline, ''):
+            try:
+                line = line.strip()
+                self.insert(f"Building {name} Server...", root.app.mctabs[name][2], line + '\n')
+                root.app.proxylog.see(tk.END)
+            except:
+                break
         p.wait()
         os.chdir(name)
         p = subprocess.Popen([self.path, f"-Xmx{ram}", f"-Xms{ram}", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
-                self.insert(root.app.mctabs[name][2], line + '\n')
+                self.insert(f"Building {name} Server...", root.app.mctabs[name][2], line + '\n')
                 root.app.mctabs[name][2].see(tk.END)
                 if "Timings Reset" in line or 'For help, type "help"' in line:
                     break
@@ -161,7 +176,7 @@ class build:
         for i, e in enumerate(properties):
             if "online-mode" in e:
                 properties[i] = "online-mode=false"
-                print("set online-mode=false")
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], "set online-mode=false\n")
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
@@ -169,7 +184,7 @@ class build:
         else:yml = "config/paper-global.yml"
         with open(yml, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        print("set paper.yml")
+        self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], "set paper.yml\n")
         config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["enabled"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["online-mode"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["secret"] = self.secret
@@ -188,7 +203,7 @@ class build:
         for i, e in enumerate(properties):
             if "server-port" in e:
                 properties[i] = f"server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}"
-                print(f"set {name} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}")
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f"set {name} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}\n")
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
@@ -210,12 +225,12 @@ class main(ttk.Notebook):
         #PROGRESS FRAME--------------------------------------------------------
         self.pframe = tk.Frame(self.buildtab)
         self.pframe.grid(column=0, columnspan=2, row=1, sticky=tk.NSEW)
-        self.pbar0 = ttk.Progressbar(self.pframe, maximum=5, mode="determinate")
         self.progress0 = tk.Label(self.pframe, text="", font=FONT)
+        self.pbar0 = ttk.Progressbar(self.pframe, maximum=5, mode="determinate")
         self.pbar = ttk.Progressbar(self.pframe, maximum=100, mode="determinate")
         self.progress = tk.Label(self.pframe, text="", font=FONT)
-        self.pbar0.grid(column=0, row=0, sticky=tk.NSEW, padx=10, pady=10)
-        self.progress0.grid(column=0, row=1, sticky=tk.EW, padx=10, pady=10)
+        self.progress0.grid(column=0, row=0, sticky=tk.EW, padx=10, pady=10)
+        self.pbar0.grid(column=0, row=1, sticky=tk.NSEW, padx=10, pady=10)
         self.pbar.grid(column=0, row=2, sticky=tk.NSEW, padx=10, pady=10)
         self.progress.grid(column=0, row=3, sticky=tk.EW, padx=10, pady=10)
         self.pframe.grid_columnconfigure(0, weight=1)
@@ -310,7 +325,7 @@ class window(tk.Tk):
         self.bind("<Control-o>", self.dialog)#TODO doesn't work
         self.title_ = ttk.Label(self, text=self.folder, font=FONT)
         self.title_.grid(row=0, column=0)
-        self.bottom = ttk.Label(self, text="", anchor=tk.E, font=FONT)
+        self.bottom = ttk.Label(self, text="", anchor=tk.E)#, font=FONT)
         self.bottom.grid(row=2, column=0, sticky=tk.EW)
         self.app = main(self)
         self.app.grid(row=1, column=0, sticky=tk.NSEW)
