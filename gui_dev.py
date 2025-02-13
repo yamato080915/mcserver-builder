@@ -254,7 +254,7 @@ class main(ttk.Notebook):
         ram = self.rament.get()
         if name in self.mctabs:
             self.select(self.mctabs[name][0])
-            return#TODO
+            return
         self.mctabs[name] = [tk.Frame(self)]
         self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.add(self.mctabs[name][0], text=name)
@@ -322,7 +322,7 @@ class window(tk.Tk):
         self.title("Minecraft Server Builder")
         self.geometry("600x360")
         self.dialog()
-        self.bind("<Control-o>", self.dialog)#TODO doesn't work
+        #self.bind("<Control-o>", self.dialog)
         self.title_ = ttk.Label(self, text=self.folder, font=FONT)
         self.title_.grid(row=0, column=0)
         self.bottom = ttk.Label(self, text="", anchor=tk.E)#, font=FONT)
