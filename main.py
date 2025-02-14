@@ -80,6 +80,7 @@ class build:
         root.bottom["text"] = f"{state}{text.replace("\n", "")}"#[:30]}{"" if len(text)<=30 else "..."}"
         box.config(state="disabled")
     def build_proxy(self):
+        root.app.btn["state"] = "disabled"
         root.app.proxylbl["text"] = "Building Velocity Server..."
         root.app.select(root.app.proxytab)
         if self.proxy:return
@@ -145,7 +146,7 @@ class build:
         if not os.path.isdir(name):os.mkdir(name)
         with open(f"{name}/eula.txt", "w", encoding="utf-8") as f:
             f.write("eula=true")
-        p = subprocess.Popen([pypath, "updater.py", f"{name}.json"])
+        p = subprocess.Popen([pypath, "updater.py", f"{name}.json"], stdout=subprocess.PIPE)
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
@@ -168,6 +169,7 @@ class build:
         p.communicate(input="stop")
         p.wait()
         self.velocity_setting(name)
+        root.app.btn["state"] = "enabled"
     def velocity_setting(self, name="lobby"):
         if not self.proxy:return
         with open("server.properties", "r", encoding="utf-8") as f:
@@ -249,11 +251,14 @@ class main(ttk.Notebook):
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
     def addtab(self):
+        root.app.btn["state"] = "disabled"
         name = self.nameent.get()
         version = self.verbox.get()
         ram = self.rament.get()
         if name in self.mctabs:
             self.select(self.mctabs[name][0])
+            return
+        if name == "":
             return
         self.mctabs[name] = [tk.Frame(self)]
         self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
@@ -291,11 +296,14 @@ class main(ttk.Notebook):
             self.mcbuild()
     def mcbuild(self):
         self.sbox = ttk.Style()
+        #self.sent = ttk.Style()
+        #self.sent.configure('warn.TEntry', font=FONT, bordercolor="#ff0000")
+        #self.sent
         self.setuplbl["text"] = "Build Minecraft Server"
-        self.btn.configure(command=self.addtab)
+        self.btn.configure(command=self.addtab, state="enabled")
         self.namelbl = tk.Label(self.buildtab, text="Server Name", font=FONT)
         self.namelbl.grid(column=0, row=1, sticky=tk.EW, padx=10, pady=10)
-        self.nameent = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)
+        self.nameent = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)#, style="warn.TEntry")
         if not os.path.isdir(f"{root.folder}/lobby"):
             self.nameent.insert("end", "lobby")
         self.nameent.grid(column=1, row=1, padx=10, pady=10)
