@@ -117,6 +117,7 @@ class build:
         self.forward()
         root.app.mcbuild()
         root.app.select(root.app.buildtab)
+        root.bottom["text"] = "Building Velocity Server...Complete!"
     def proxy_setting(self):
         velocity = toml.load(open("velocity.toml"))
         velocity["player-info-forwarding-mode"] = "modern"
@@ -169,6 +170,7 @@ class build:
         p.wait()
         self.velocity_setting(name)
         root.app.btn["state"] = "enabled"
+        root.bottom["text"] = f"Building {name} Server...Complete!"
     def velocity_setting(self, name="lobby"):
         if not self.proxy:return
         with open("server.properties", "r", encoding="utf-8") as f:
@@ -259,8 +261,7 @@ class main(ttk.Notebook):
         if name in self.mctabs:
             self.select(self.mctabs[name][0])
             return
-        if name == "":
-            return
+        if name == "":return
         self.mctabs[name] = [tk.Frame(self)]
         self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.add(self.mctabs[name][0], text=name)
