@@ -58,8 +58,7 @@ class build:
         for i in urls["jdk"]:
             root.app.progress0["text"]=f"Downloading {i[0]}"
             if not os.path.isdir(f"jdk/{i[0]}"):
-                root.app.dlstart = time.perf_counter_ns()
-                root.app.speed = 0
+                root.app.dlstart = time.perf_counter()
                 th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f"__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}", reporthook=root.app.dlhook), name="download", daemon=True)
                 th.start()
                 th.join()
@@ -211,8 +210,10 @@ class build:
             f.write(text)
         
 class main(ttk.Notebook):
-    def __init__(self, master=None):
+    def __init__(self, master=None, folder="server"):
         super().__init__(master)
+        self.folder = folder
+        self.dlstart = 0
         self.s = ttk.Style()
         self.s.configure('TNotebook.Tab', font=FONT)
         self.sbtn = ttk.Style()
@@ -271,19 +272,15 @@ class main(ttk.Notebook):
         self.mctabs[name][0].grid_rowconfigure(1, weight=1)
         threading.Thread(target=lambda: self.builder.build_mcserver(name=name, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
-        dltime = time.perf_counter_ns()-self.dlstart
+        dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
-        dlspeed = round((block_size*10000000/(dltime*8192) + self.speed)/2, 1)
-        if dlspeed == 0.0:dlspeed = 100.0
-        time_ = int(((total_size-block_count*block_size))/(dlspeed*8192))
-        #self.progress.set(int(block_count*block_size))
+        dlspeed = round(block_size*block_count*8/(dltime*1024*1024), 1)
+        t = round((total_size-block_size*block_count)*8/(dlspeed*1024*1024+0.01))
         self.pbar["value"] = int(block_count*block_size)
         if int(block_count*block_size/1024) > round(total_size/1024):self.progress.configure(text=f"Complete! {round(total_size/1024)}KB")
-        elif (block_count*block_size/1024) != 0.0:self.progress.configure(text=f"{int(block_count*block_size/1024)}KB / {round(total_size/1024)}KB\n{dlspeed}Mbps 残り{time_}s")
-        self.dlstart = time.perf_counter_ns()
-        self.speed = round(block_size*10000000/(dltime*8192), 1)
+        elif (block_count*block_size/1024) != 0.0:self.progress.configure(text=f"{int(block_count*block_size/1024)}KB / {round(total_size/1024)}KB\n{dlspeed}Mbps 残り{t}s")
     def setup(self):
-        self.builder = build()
+        self.builder = build(folder=self.folder)
         self.pframe.grid_forget()
         self.pbar["value"] = 0
         self.pbar0["value"] = 0
@@ -292,7 +289,7 @@ class main(ttk.Notebook):
         self.setuplbl.grid(column=0, row=0, sticky=tk.EW, padx=10, pady=10)
         self.btn = ttk.Button(self.buildtab, text="Build", style='my.TButton', command=lambda: threading.Thread(target=self.builder.build_proxy, name="build proxy", daemon=True).start())
         self.btn.grid(column=1, row=0, padx=10, pady=10)
-        if os.path.isdir(f"{root.folder}/proxy"):
+        if os.path.isdir(f"{self.folder}/proxy"):
             self.mcbuild()
     def mcbuild(self):
         self.sbox = ttk.Style()
@@ -304,7 +301,7 @@ class main(ttk.Notebook):
         self.namelbl = tk.Label(self.buildtab, text="Server Name", font=FONT)
         self.namelbl.grid(column=0, row=1, sticky=tk.EW, padx=10, pady=10)
         self.nameent = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)#, style="warn.TEntry")
-        if not os.path.isdir(f"{root.folder}/lobby"):
+        if not os.path.isdir(f"{self.folder}/lobby"):
             self.nameent.insert("end", "lobby")
         self.nameent.grid(column=1, row=1, padx=10, pady=10)
         self.nameent.focus_set()
@@ -335,7 +332,7 @@ class window(tk.Tk):
         self.title_.grid(row=0, column=0)
         self.bottom = ttk.Label(self, text="", anchor=tk.E)#, font=FONT)
         self.bottom.grid(row=2, column=0, sticky=tk.EW)
-        self.app = main(self)
+        self.app = main(self, folder=self.folder)
         self.app.grid(row=1, column=0, sticky=tk.NSEW)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
