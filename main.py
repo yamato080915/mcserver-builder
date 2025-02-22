@@ -1,4 +1,4 @@
-import os, requests, shutil, json, subprocess, sys, yaml, toml, platform, threading, time
+import os, requests, shutil, json, subprocess, sys, yaml, toml, platform, threading, time, glob
 from urllib import request
 
 import tkinter as tk
@@ -108,10 +108,10 @@ class build:
                 self.insert("Building velocity...", root.app.proxylog, line + '\n')
                 root.app.proxylog.see(tk.END)
                 if "Done" in line:
-                    break
+                    p.stdin.write("end\n")
+                    p.stdin.flush()
             except:
                 break
-        p.communicate(input="end")
         self.proxy = True
         root.app.proxylbl["text"] = "Setting Velocity Server..."
         self.proxy_setting()
@@ -147,7 +147,7 @@ class build:
         if not os.path.isdir(name):os.mkdir(name)
         with open(f"{name}/eula.txt", "w", encoding="utf-8") as f:
             f.write("eula=true")
-        p = subprocess.Popen([pypath, "updater.py", f"{name}.json"], stdout=subprocess.PIPE)
+        p = subprocess.Popen([pypath, "updater.py", f"{name}.json"], stdout=subprocess.PIPE, text=True)
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
@@ -164,10 +164,10 @@ class build:
                 self.insert(f"Building {name} Server...", root.app.mctabs[name][2], line + '\n')
                 root.app.mctabs[name][2].see(tk.END)
                 if "Timings Reset" in line or 'For help, type "help"' in line:
-                    break
+                    p.stdin.write("stop\n")
+                    p.stdin.flush()
             except:
                 break
-        p.communicate(input="stop")
         p.wait()
         self.velocity_setting(name)
         root.app.btn["state"] = "enabled"
@@ -211,6 +211,7 @@ class build:
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
+        root.app.mctabs[name][2].see(tk.END)
         
 class main(ttk.Notebook):
     def __init__(self, master=None, folder="server"):
@@ -264,7 +265,7 @@ class main(ttk.Notebook):
         self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
-    def addtab(self, name=None, version=None, ram=None):
+    def addtab(self, name=None, version=None, ram=None, bld=True):
         root.app.btn["state"] = "disabled"
         if name==None:name = self.nameent.get()
         if version==None:version = self.verbox.get()
@@ -282,7 +283,7 @@ class main(ttk.Notebook):
         self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
         self.mctabs[name][0].grid_columnconfigure(0, weight=1)
         self.mctabs[name][0].grid_rowconfigure(1, weight=1)
-        threading.Thread(target=lambda: self.builder.build_mcserver(name=name, version=version, ram=ram), name="build server", daemon=True).start()
+        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
@@ -301,6 +302,12 @@ class main(ttk.Notebook):
         self.setuplbl.grid(column=0, row=0, sticky=tk.EW, padx=10, pady=10)
         self.btn = ttk.Button(self.buildtab, text="Build", style='my.TButton', command=lambda: threading.Thread(target=self.builder.build_proxy, name="build proxy", daemon=True).start())
         self.btn.grid(column=1, row=0, padx=10, pady=10)
+        servers = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob(f"{self.folder}/*.json") if os.path.isdir(f"{self.folder}/{os.path.splitext(os.path.basename(x))[0]}") and os.path.basename(x)!="proxy.json"]
+        print(servers)
+        for i in servers:
+            with open(f"{self.folder}/{i}.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+                self.addtab(name=i, version=data["version"], ram=data["RAM"], bld=False)
         if os.path.isdir(f"{self.folder}/proxy"):
             self.mcbuild()
         #mcserverのフォルダを取得してタブを作成
