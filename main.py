@@ -25,7 +25,7 @@ jdkurls = {
         ]
 }
 OS = platform.system()
-pypath = f"py{"thon" if OS!="Windows" else ""}"
+pypath = f'py{"thon" if OS!="Windows" else ""}'
 
 if not OS in list(jdkurls.keys()):
     sys.exit("Unsupported OS")
@@ -59,10 +59,10 @@ class build:
             root.app.progress0["text"]=f"Downloading {i[0]}"
             if not os.path.isdir(f"jdk/{i[0]}"):
                 root.app.dlstart = time.perf_counter()
-                th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f"__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}", reporthook=root.app.dlhook), name="download", daemon=True)
+                th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=root.app.dlhook), name="download", daemon=True)
                 th.start()
                 th.join()
-                shutil.unpack_archive(f"__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}", "jdk")
+                shutil.unpack_archive(f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', "jdk")
                 shutil.move(f"./jdk/{i[2]}", f"./jdk/{i[0]}")
             root.app.pbar0["value"]+=1
         root.app.progress0["text"] = "updating mcserver-updater" if os.path.isfile("updater.py") else "installing mcserver-updater"
@@ -76,7 +76,8 @@ class build:
     def insert(self, state, box, text):
         box.config(state="normal")
         box.insert('end', text)
-        root.bottom["text"] = f"{state}{text.replace("\n", "")}"#[:30]}{"" if len(text)<=30 else "..."}"
+        root.bottom["text"] = state + text.replace("\n", "")
+        #[:30]}{"" if len(text)<=30 else "..."}"
         box.config(state="disabled")
     def build_proxy(self):
         root.app.btn["state"] = "disabled"
@@ -188,9 +189,9 @@ class build:
         with open(yml, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], "set paper.yml\n")
-        config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["enabled"] = True
-        config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["online-mode"] = True
-        config["settings" if yml=="paper.yml" else "proxies"][f"velocity{"-support" if yml=="paper.yml" else ""}"]["secret"] = self.secret
+        config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["enabled"] = True
+        config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["online-mode"] = True
+        config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["secret"] = self.secret
         with open(yml, "w", encoding="utf-8") as f:
             yaml.safe_dump(config, f)
         os.chdir("../proxy")
@@ -199,14 +200,14 @@ class build:
             velocity["servers"][name] = "127.0.0.1:25566"
             velocity["servers"]["try"] = [name]
         else:
-            velocity["servers"][name] = f"127.0.0.1:{25565 + len(list(velocity["servers"].values()))}"
+            velocity["servers"][name] = f'127.0.0.1:{25565 + len(list(velocity["servers"].values()))}'
         toml.dump(velocity, open('velocity.toml', mode='w'))
         os.chdir(f"../{name}")
         text = ""
         for i, e in enumerate(properties):
             if "server-port" in e:
-                properties[i] = f"server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}"
-                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f"set {name} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}\n")
+                properties[i] = f'server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}'
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f'set {name} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}\n')
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
@@ -231,7 +232,7 @@ class main(ttk.Notebook):
         self.pframe = tk.Frame(self.buildtab)
         self.pframe.grid(column=0, columnspan=2, row=1, sticky=tk.NSEW)
         self.progress0 = tk.Label(self.pframe, text="", font=FONT)
-        self.pbar0 = ttk.Progressbar(self.pframe, maximum=5, mode="determinate")
+        self.pbar0 = ttk.Progressbar(self.pframe, maximum=4, mode="determinate")
         self.pbar = ttk.Progressbar(self.pframe, maximum=100, mode="determinate")
         self.progress = tk.Label(self.pframe, text="", font=FONT)
         self.progress0.grid(column=0, row=0, sticky=tk.EW, padx=10, pady=10)
@@ -259,15 +260,15 @@ class main(ttk.Notebook):
         self.proxypanel = ttk.Frame(self.proxytab)
         self.proxypanel.grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
         #MAIN PROCESS----------------------------------------------------------
-        self.add(self.buildtab, text="Build")
-        self.add(self.proxytab, text="Proxy")
+        self.add(self.buildtab, text="BUILD")
+        self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
-    def addtab(self):
+    def addtab(self, name=None, version=None, ram=None):
         root.app.btn["state"] = "disabled"
-        name = self.nameent.get()
-        version = self.verbox.get()
-        ram = self.rament.get()
+        if name==None:name = self.nameent.get()
+        if version==None:version = self.verbox.get()
+        if ram==None:ram = self.rament.get()
         if name in self.mctabs:
             self.select(self.mctabs[name][0])
             return
@@ -302,6 +303,7 @@ class main(ttk.Notebook):
         self.btn.grid(column=1, row=0, padx=10, pady=10)
         if os.path.isdir(f"{self.folder}/proxy"):
             self.mcbuild()
+        #mcserverのフォルダを取得してタブを作成
     def mcbuild(self):
         self.sbox = ttk.Style()
         #self.sent = ttk.Style()
