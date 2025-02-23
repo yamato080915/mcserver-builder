@@ -8,20 +8,21 @@ FONT = ("Yu Gothic UI", 12, "normal")
 
 urls = {
     "updater": "https://github.com/yamato080915/mcserver-updater/archive/refs/heads/main.zip", 
-    "purpur": "https://api.purpurmc.org/v2/purpur/"
+    "purpur": "https://api.purpurmc.org/v2/purpur/", 
+    "paper": "https://api.papermc.io/v2/projects/paper"
 }
 jdkurls = {
     "Windows": [
         ["jdk21", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/21.0.6+7/openlogic-openjdk-21.0.6+7-windows-x64.zip", "openlogic-openjdk-21.0.6+7-windows-x64"], 
         ["jdk17", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/17.0.14+7/openlogic-openjdk-17.0.14+7-windows-x64.zip", "openlogic-openjdk-17.0.14+7-windows-x64"], 
-        ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.26+4/openlogic-openjdk-11.0.26+4-windows-x64.zip", "openlogic-openjdk-11.0.26+4-windows-x64"],
-        ["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u442-b06/openlogic-openjdk-8u442-b06-windows-x64.zip", "openlogic-openjdk-8u442-b06-windows-x64"]
+        ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.26+4/openlogic-openjdk-11.0.26+4-windows-x64.zip", "openlogic-openjdk-11.0.26+4-windows-x64"]#,
+        #["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u442-b06/openlogic-openjdk-8u442-b06-windows-x64.zip", "openlogic-openjdk-8u442-b06-windows-x64"]
         ], 
     "Linux":[
         ["jdk21", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/21.0.6+7/openlogic-openjdk-21.0.6+7-linux-x64.tar.gz", "openlogic-openjdk-21.0.6+7-linux-x64"], 
         ["jdk17", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/17.0.14+7/openlogic-openjdk-17.0.14+7-linux-x64.tar.gz", "openlogic-openjdk-17.0.14+7-linux-x64"], 
-        ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.26+4/openlogic-openjdk-11.0.26+4-linux-x64.tar.gz", "openlogic-openjdk-11.0.26+4-linux-x64"],
-        ["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u442-b06/openlogic-openjdk-8u442-b06-linux-x64.tar.gz", "openlogic-openjdk-8u442-b06-linux-x64"]
+        ["jdk11", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/11.0.26+4/openlogic-openjdk-11.0.26+4-linux-x64.tar.gz", "openlogic-openjdk-11.0.26+4-linux-x64"]#,
+        #["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u442-b06/openlogic-openjdk-8u442-b06-linux-x64.tar.gz", "openlogic-openjdk-8u442-b06-linux-x64"]
         ]
 }
 OS = platform.system()
@@ -40,8 +41,11 @@ class build:
         self.install()
         shutil.rmtree("__cache__")
         os.mkdir("__cache__")
-        self.versions = list(json.loads(requests.get(urls["purpur"]).text)["versions"])
-        self.jdkpath = {"..\\jdk\\jdk11\\bin\\java": self.versions[:self.versions.index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": self.versions[self.versions.index("1.16.5")+1:self.versions.index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": self.versions[self.versions.index("1.19.3"):]}
+        self.versions = {"purpur": list(json.loads(requests.get(urls["purpur"]).text)["versions"]), "paper": list(json.loads(requests.get(urls["paper"]).text)["versions"])}
+        self.jdkpath = {
+            "purpur": {"..\\jdk\\jdk11\\bin\\java": self.versions["purpur"][:self.versions["purpur"].index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": self.versions["purpur"][self.versions["purpur"].index("1.16.5")+1:self.versions["purpur"].index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": self.versions["purpur"][self.versions["purpur"].index("1.19.3"):]},
+            "paper": {"..\\jdk\\jdk11\\bin\\java": self.versions["paper"][:self.versions["paper"].index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": self.versions["paper"][self.versions["paper"].index("1.16.5")+1:self.versions["paper"].index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": self.versions["paper"][self.versions["paper"].index("1.19.3"):]}
+        }
         if os.path.isdir("proxy") and os.path.isfile("proxy/forwarding.secret"):
             self.proxy = True
             os.chdir("proxy")
@@ -132,16 +136,16 @@ class build:
     def forward(self):
         with open("forwarding.secret", "r", encoding="utf-8") as f:
             self.secret = f.read()
-    def build_mcserver(self, name="lobby", version="", ram="4G"):
+    def build_mcserver(self, name="lobby", software="purpur", version="", ram="4G"):
         root.app.select(root.app.mctabs[name][0])
         os.chdir(self.cwd)
-        if version=="":version = self.versions[-1]
-        self.path = "..\\jdk\\jdk21\\bin\\java" if version in self.jdkpath["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.jdkpath["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
+        if version=="":version = self.versions[software][-1]
+        self.path = "..\\jdk\\jdk21\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
         if OS!="Windows":self.path = self.path.replace("\\", "/")
-        self.jsonData = {"file": f"{name}/purpur.jar", "software": "purpur", "version": version, "build": 0, "version-up": False, "jdk": self.path, "RAM": ram}
+        self.jsonData = {"file": f"{name}/{software}.jar", "software": software, "version": version, "build": 0, "version-up": False, "jdk": self.path, "RAM": ram}
         with open(f"{name}.json", "w", encoding="utf-8") as f:
             json.dump(self.jsonData, f, indent=4)
-        cmdData = f"@echo off\npy updater.py {name}.json\nIF %ERRORLEVEL% == 0 (\n    cd {name}\n    {self.path} -Xmx{ram} -Xms{ram} -jar purpur.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
+        cmdData = f"@echo off\npy updater.py {name}.json\nIF %ERRORLEVEL% == 0 (\n    cd {name}\n    {self.path} -Xmx{ram} -Xms{ram} -jar {software}.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
         with open(f"./{name}.cmd", "w", encoding="utf-8") as f:
             f.write(cmdData)
         if not os.path.isdir(name):os.mkdir(name)
@@ -157,7 +161,7 @@ class build:
                 break
         p.wait()
         os.chdir(name)
-        p = subprocess.Popen([self.path, f"-Xmx{ram}", f"-Xms{ram}", "-jar", "purpur.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
+        p = subprocess.Popen([self.path, f"-Xmx{ram}", f"-Xms{ram}", "-jar", f"{software}.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
@@ -265,15 +269,16 @@ class main(ttk.Notebook):
         self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
-    def addtab(self, name=None, version=None, ram=None, bld=True):
-        root.app.btn["state"] = "disabled"
+    def addtab(self, name=None, software=None, version=None, ram=None, bld=True):
         if name==None:name = self.nameent.get()
+        if software==None:software = self.softbox.get()
         if version==None:version = self.verbox.get()
         if ram==None:ram = self.rament.get()
         if name in self.mctabs:
             self.select(self.mctabs[name][0])
             return
         if name == "":return
+        root.app.btn["state"] = "disabled"
         self.mctabs[name] = [tk.Frame(self)]
         self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.add(self.mctabs[name][0], text=name)
@@ -283,7 +288,7 @@ class main(ttk.Notebook):
         self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
         self.mctabs[name][0].grid_columnconfigure(0, weight=1)
         self.mctabs[name][0].grid_rowconfigure(1, weight=1)
-        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, version=version, ram=ram), name="build server", daemon=True).start()
+        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
@@ -303,11 +308,10 @@ class main(ttk.Notebook):
         self.btn = ttk.Button(self.buildtab, text="Build", style='my.TButton', command=lambda: threading.Thread(target=self.builder.build_proxy, name="build proxy", daemon=True).start())
         self.btn.grid(column=1, row=0, padx=10, pady=10)
         servers = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob(f"{self.folder}/*.json") if os.path.isdir(f"{self.folder}/{os.path.splitext(os.path.basename(x))[0]}") and os.path.basename(x)!="proxy.json"]
-        print(servers)
         for i in servers:
             with open(f"{self.folder}/{i}.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
-                self.addtab(name=i, version=data["version"], ram=data["RAM"], bld=False)
+                self.addtab(name=i, software=data["software"], version=data["version"], ram=data["RAM"], bld=False)
         if os.path.isdir(f"{self.folder}/proxy"):
             self.mcbuild()
         #mcserverのフォルダを取得してタブを作成
@@ -327,19 +331,24 @@ class main(ttk.Notebook):
         self.nameent.focus_set()
         self.softlbl = tk.Label(self.buildtab, text="Software", font=FONT)
         self.softlbl.grid(column=0, row=2, sticky=tk.EW, padx=10, pady=10)
-        self.softbox = ttk.Combobox(self.buildtab, values=["Purpur"], font=FONT, state="readonly", justify=tk.CENTER, width=10)
-        self.softbox.set("Purpur")
+        self.softbox = ttk.Combobox(self.buildtab, values=["purpur", "paper"], font=FONT, state="readonly", justify=tk.CENTER, width=10)
+        self.softbox.set("purpur")
+        self.softbox.bind("<<ComboboxSelected>>", self.comboselect)
         self.softbox.grid(column=1, row=2, padx=10, pady=10)
         self.verlbl = tk.Label(self.buildtab, text="Minecraft Version", font=FONT)
         self.verlbl.grid(column=0, row=3, sticky=tk.EW, padx=10, pady=10)
-        self.verbox = ttk.Combobox(self.buildtab, values=sorted(self.builder.versions, reverse=True), font=FONT, state="readonly", justify=tk.CENTER, width=10, style="my.TCombobox")
-        self.verbox.set(sorted(self.builder.versions, reverse=True)[0])
+        self.verbox = ttk.Combobox(self.buildtab, values=list(reversed(self.builder.versions["purpur"])), font=FONT, state="readonly", justify=tk.CENTER, width=10, style="my.TCombobox")
+        self.verbox.set(list(reversed(self.builder.versions["purpur"]))[0])
         self.verbox.grid(column=1, row=3, padx=10, pady=10)
         self.ramlbl = tk.Label(self.buildtab, text="Memory Allocation", font=FONT)
         self.ramlbl.grid(column=0, row=4, sticky=tk.EW, padx=10, pady=10)
         self.rament = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)
         self.rament.insert("end", "4G")
         self.rament.grid(column=1, row=4, padx=10, pady=10)
+    def comboselect(self, event=None):
+        self.verbox.configure(values=list(reversed(self.builder.versions[self.softbox.get()])))
+        if not self.verbox.get() in list(reversed(self.builder.versions[self.softbox.get()])):
+            self.verbox.set(list(reversed(self.builder.versions[self.softbox.get()]))[0])
 
 class window(tk.Tk):
     def __init__(self):
