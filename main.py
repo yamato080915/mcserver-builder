@@ -206,8 +206,8 @@ class build:
         text = ""
         for i, e in enumerate(properties):
             if "server-port" in e:
-                properties[i] = f'server-port={25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}'
-                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f'set {name} port:{25565 + 1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))}\n')
+                properties[i] = 'server-port=' + str(25565 + (1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))-1))
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f'set {name} port:' + str(25565 + (1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))-1)))
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
