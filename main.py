@@ -33,27 +33,28 @@ if not OS in list(jdkurls.keys()):
 
 urls["jdk"] = jdkurls[OS]
 
+def folderclear(folder):
+    shutil.rmtree(folder)
+    os.mkdir(folder)
+
 class build:
     def __init__(self, folder="server"):
+        self.folder = folder
         self.proxy = False
         self.secret = ""
         self.setup(folder)
         self.install()
-        shutil.rmtree("__cache__")
-        os.mkdir("__cache__")
+        folderclear("__cache__")
         self.versions = {"purpur": list(json.loads(requests.get(urls["purpur"]).text)["versions"]), "paper": list(json.loads(requests.get(urls["paper"]).text)["versions"])}
         self.jdkpath = {
             "purpur": {"..\\jdk\\jdk11\\bin\\java": self.versions["purpur"][:self.versions["purpur"].index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": self.versions["purpur"][self.versions["purpur"].index("1.16.5")+1:self.versions["purpur"].index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": self.versions["purpur"][self.versions["purpur"].index("1.19.3"):]},
             "paper": {"..\\jdk\\jdk11\\bin\\java": self.versions["paper"][:self.versions["paper"].index("1.16.5")+1], "..\\jdk\\jdk17\\bin\\java": self.versions["paper"][self.versions["paper"].index("1.16.5")+1:self.versions["paper"].index("1.19.2")+1], "..\\jdk\\jdk21\\bin\\java": self.versions["paper"][self.versions["paper"].index("1.19.3"):]}
         }
-        if os.path.isdir("proxy") and os.path.isfile("proxy/forwarding.secret"):
-            self.proxy = True
-            os.chdir("proxy")
+        self.proxy = os.path.isdir("proxy") and os.path.isfile("proxy/forwarding.secret")
     def setup(self, folder):
         if not os.path.isdir(folder):
             os.mkdir(folder)
         os.chdir(folder)
-        self.cwd = os.getcwd()
         if not os.path.isdir("__cache__"):
             os.mkdir("__cache__")
         if not os.path.isdir("jdk"):
@@ -84,6 +85,7 @@ class build:
         #[:30]}{"" if len(text)<=30 else "..."}"
         box.config(state="disabled")
     def build_proxy(self):
+        os.chdir(f"{self.folder}")
         root.app.btn["state"] = "disabled"
         root.app.proxylbl["text"] = "Building Velocity Server..."
         root.app.select(root.app.proxytab)
@@ -138,7 +140,7 @@ class build:
             self.secret = f.read()
     def build_mcserver(self, name="lobby", software="purpur", version="", ram="4G"):
         root.app.select(root.app.mctabs[name][0])
-        os.chdir(self.cwd)
+        os.chdir(self.folder)
         if version=="":version = self.versions[software][-1]
         self.path = "..\\jdk\\jdk21\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
         if OS!="Windows":self.path = self.path.replace("\\", "/")
@@ -269,34 +271,6 @@ class main(ttk.Notebook):
         self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
-    def addtab(self, name=None, software=None, version=None, ram=None, bld=True):
-        if name==None:name = self.nameent.get()
-        if software==None:software = self.softbox.get()
-        if version==None:version = self.verbox.get()
-        if ram==None:ram = self.rament.get()
-        if name in self.mctabs:
-            self.select(self.mctabs[name][0])
-            return
-        if name == "":return
-        root.app.btn["state"] = "disabled"
-        self.mctabs[name] = [tk.Frame(self)]
-        self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
-        self.add(self.mctabs[name][0], text=name)
-        self.mctabs[name].append(tk.Label(self.mctabs[name][0], text="", font=FONT))
-        self.mctabs[name][1].grid(column=0, row=0, sticky=tk.EW)
-        self.mctabs[name].append(scrolledtext.ScrolledText(self.mctabs[name][0], state="disabled", font=("Yu Gothic UI", 10, "normal")))
-        self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
-        self.mctabs[name][0].grid_columnconfigure(0, weight=1)
-        self.mctabs[name][0].grid_rowconfigure(1, weight=1)
-        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
-    def dlhook(self, block_count, block_size, total_size):
-        dltime = time.perf_counter()-self.dlstart
-        self.pbar.configure(maximum=total_size)
-        dlspeed = round(block_size*block_count*8/(dltime*1024*1024), 1)
-        t = round((total_size-block_size*block_count)*8/(dlspeed*1024*1024+0.01))
-        self.pbar["value"] = int(block_count*block_size)
-        if int(block_count*block_size/1024) > round(total_size/1024):self.progress.configure(text=f"Complete! {round(total_size/1024)}KB")
-        elif (block_count*block_size/1024) != 0.0:self.progress.configure(text=f"{int(block_count*block_size/1024)}KB / {round(total_size/1024)}KB\n{dlspeed}Mbps 残り{t}s")
     def setup(self):
         self.builder = build(folder=self.folder)
         self.pframe.grid_forget()
@@ -345,6 +319,34 @@ class main(ttk.Notebook):
         self.rament = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)
         self.rament.insert("end", "4G")
         self.rament.grid(column=1, row=4, padx=10, pady=10)
+    def addtab(self, name=None, software=None, version=None, ram=None, bld=True):
+        if name==None:name = self.nameent.get()
+        if software==None:software = self.softbox.get()
+        if version==None:version = self.verbox.get()
+        if ram==None:ram = self.rament.get()
+        if name in self.mctabs:
+            self.select(self.mctabs[name][0])
+            return
+        if name == "":return
+        root.app.btn["state"] = "disabled"
+        self.mctabs[name] = [tk.Frame(self)]
+        self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
+        self.add(self.mctabs[name][0], text=name)
+        self.mctabs[name].append(tk.Label(self.mctabs[name][0], text="", font=FONT))
+        self.mctabs[name][1].grid(column=0, row=0, sticky=tk.EW)
+        self.mctabs[name].append(scrolledtext.ScrolledText(self.mctabs[name][0], state="disabled", font=("Yu Gothic UI", 10, "normal")))
+        self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
+        self.mctabs[name][0].grid_columnconfigure(0, weight=1)
+        self.mctabs[name][0].grid_rowconfigure(1, weight=1)
+        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
+    def dlhook(self, block_count, block_size, total_size):
+        dltime = time.perf_counter()-self.dlstart
+        self.pbar.configure(maximum=total_size)
+        dlspeed = round(block_size*block_count*8/(dltime*1024*1024), 1)
+        t = round((total_size-block_size*block_count)*8/(dlspeed*1024*1024+0.01))
+        self.pbar["value"] = int(block_count*block_size)
+        if int(block_count*block_size/1024) > round(total_size/1024):self.progress.configure(text=f"Complete! {round(total_size/1024)}KB")
+        elif (block_count*block_size/1024) != 0.0:self.progress.configure(text=f"{int(block_count*block_size/1024)}KB / {round(total_size/1024)}KB\n{dlspeed}Mbps 残り{t}s")
     def comboselect(self, event=None):
         self.verbox.configure(values=list(reversed(self.builder.versions[self.softbox.get()])))
         if not self.verbox.get() in list(reversed(self.builder.versions[self.softbox.get()])):
