@@ -228,6 +228,9 @@ class main(ttk.Notebook):
         self.s.configure('TNotebook.Tab', font=FONT)
         self.sbtn = ttk.Style()
         self.sbtn.configure('my.TButton', font=FONT)
+        self.si = subprocess.STARTUPINFO()
+        self.si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+        self.si.wShowWindow = subprocess.SW_HIDE
         self.buildtab = tk.Frame(self)
         self.buildtab.grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         #BUILDTAB--------------------------------------------------------------
@@ -258,7 +261,7 @@ class main(ttk.Notebook):
         self.proxytab.grid_rowconfigure(1, weight=1)
         self.btnframe = tk.Frame(self.proxytab)
         self.btnframe.grid(column=0, row=2, sticky=tk.EW)
-        self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton')
+        self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner("proxy"), name="run").start())
         self.proxyrun.grid(column=0, row=0)
         self.proxyend = ttk.Button(self.btnframe, text="Stop", style='my.TButton')
         self.proxyend.grid(column=1, row=0)
@@ -271,6 +274,41 @@ class main(ttk.Notebook):
         self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
+    def server_runner(self, server="proxy"):
+        if server=="proxy":
+            self.select(self.proxytab)
+        else:
+            self.select(server)
+        os.chdir(self.folder)
+        with open(f"./{server}.json", "r", encoding="utf-8") as f:
+            jsondata = json.load(f)
+        if OS=="Windows":
+            p = subprocess.Popen([f"{server}.cmd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
+            if server=="proxy":
+                for line in iter(p.stdout.readline, ''):
+                    try:
+                        line = line.strip()
+                        self.insert(f"Running {server} Server...", self.proxylog, line + '\n')
+                        self.proxylog.see(tk.END)
+                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
+                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
+                            p.stdin.flush()
+                    except:
+                        break
+            else:
+                for line in iter(p.stdout.readline, ''):
+                    try:
+                        line = line.strip()
+                        self.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
+                        self.mctabs[server][2].see(tk.END)
+                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
+                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
+                            p.stdin.flush()
+                    except:
+                        break
+        else:
+            print("run")
+
     def setup(self):
         self.builder = build(folder=self.folder)
         self.pframe.grid_forget()
