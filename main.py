@@ -228,9 +228,10 @@ class main(ttk.Notebook):
         self.s.configure('TNotebook.Tab', font=FONT)
         self.sbtn = ttk.Style()
         self.sbtn.configure('my.TButton', font=FONT)
-        self.si = subprocess.STARTUPINFO()
-        self.si.dwFlags = subprocess.STARTF_USESHOWWINDOW
-        self.si.wShowWindow = subprocess.SW_HIDE
+        if OS=="Windows":
+            self.si = subprocess.STARTUPINFO()
+            self.si.dwFlags = subprocess.STARTF_USESHOWWINDOW
+            self.si.wShowWindow = subprocess.SW_HIDE
         self.buildtab = tk.Frame(self)
         self.buildtab.grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         #BUILDTAB--------------------------------------------------------------
