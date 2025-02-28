@@ -432,11 +432,11 @@ class main(ttk.Notebook):
         self.mctabs[name]["btnframe"] = {}
         self.mctabs[name]["btnframe"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=2, sticky=tk.EW)
-        self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start())
+        self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start())
         self.mctabs[name]["btnframe"]["run"].grid(column=0, row=0)
-        self.mctabs[name]["btnframe"]["stop"] = ttk.Button(self.mctabs[name]["btnframe"], text="Stop", style='my.TButton', command=lambda: self.stop(name))
+        self.mctabs[name]["btnframe"]["stop"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Stop", style='my.TButton', command=lambda: self.stop(name))
         self.mctabs[name]["btnframe"]["stop"].grid(column=1, row=0)
-        self.mctabs[name]["btnframe"]["kill"] = ttk.Button(self.mctabs[name]["btnframe"], text="Kill", style='my.TButton', command=lambda: self.kill(name))
+        self.mctabs[name]["btnframe"]["kill"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Kill", style='my.TButton', command=lambda: self.kill(name))
         self.mctabs[name]["btnframe"]["kill"].grid(column=2, row=0)
         self.mctabs[name]["panel"] = {}
         self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
