@@ -139,7 +139,7 @@ class build:
         with open("forwarding.secret", "r", encoding="utf-8") as f:
             self.secret = f.read()
     def build_mcserver(self, name="lobby", software="purpur", version="", ram="4G"):
-        root.app.select(root.app.mctabs[name][0])
+        root.app.select(root.app.mctabs[name]["frame"])
         os.chdir(self.folder)
         if version=="":version = self.versions[software][-1]
         self.path = "..\\jdk\\jdk21\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
@@ -157,7 +157,7 @@ class build:
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
-                self.insert(f"Building {name} Server...", root.app.mctabs[name][2], line + '\n')
+                self.insert(f"Building {name} Server...", root.app.mctabs[name]["txt"], line + '\n')
                 root.app.proxylog.see(tk.END)
             except:
                 break
@@ -167,8 +167,8 @@ class build:
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
-                self.insert(f"Building {name} Server...", root.app.mctabs[name][2], line + '\n')
-                root.app.mctabs[name][2].see(tk.END)
+                self.insert(f"Building {name} Server...", root.app.mctabs[name]["txt"], line + '\n')
+                root.app.mctabs[name]["txt"].see(tk.END)
                 if "Timings Reset" in line or 'For help, type "help"' in line:
                     p.stdin.write("stop\n")
                     p.stdin.flush()
@@ -186,7 +186,7 @@ class build:
         for i, e in enumerate(properties):
             if "online-mode" in e:
                 properties[i] = "online-mode=false"
-                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], "set online-mode=false\n")
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name]["txt"], "set online-mode=false\n")
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
@@ -194,7 +194,7 @@ class build:
         else:yml = "config/paper-global.yml"
         with open(yml, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
-        self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], "set paper.yml\n")
+        self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name]["txt"], "set paper.yml\n")
         config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["enabled"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["online-mode"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["secret"] = self.secret
@@ -213,11 +213,11 @@ class build:
         for i, e in enumerate(properties):
             if "server-port" in e:
                 properties[i] = 'server-port=' + str(25565 + (1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))-1))
-                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name][2], f'set {name} port:' + str(25565 + (1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))-1)))
+                self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name]["txt"], f'set {name} port:' + str(25565 + (1 if len(list(velocity["servers"].values()))==2 else len(list(velocity["servers"].values()))-1)))
             text += f"\n{properties[i]}"
         with open("server.properties", "w", encoding="utf-8") as f:
             f.write(text)
-        root.app.mctabs[name][2].see(tk.END)
+        root.app.mctabs[name]["txt"].see(tk.END)
         
 class main(ttk.Notebook):
     def __init__(self, master=None, folder="server"):
@@ -280,7 +280,7 @@ class main(ttk.Notebook):
         if server=="proxy":
             self.select(self.proxytab)
         else:
-            self.select(self.mctabs[server][0])
+            self.select(self.mctabs[server]["frame"])
         os.chdir(self.folder)
         if OS=="Windows":
             self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -296,8 +296,8 @@ class main(ttk.Notebook):
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
-                        self.mctabs[server][2].see(tk.END)
+                        self.builder.insert(f"Running {server} Server...", self.mctabs[server]["txt"], line + '\n')
+                        self.mctabs[server]["txt"].see(tk.END)
                     except:
                         break
         else:
@@ -320,18 +320,18 @@ class main(ttk.Notebook):
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
-                        self.mctabs[server][2].see(tk.END)
+                        self.builder.insert(f"Running {server} Server...", self.mctabs[server]["txt"], line + '\n')
+                        self.mctabs[server]["txt"].see(tk.END)
                     except:
                         break
     def stop(self, server="proxy"):
         if self.running_p[server]==None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
-            else:self.builder.insert("", self.mctabs[server][2], f"{server}はまだ開始されていません\n")
+            else:self.builder.insert("", self.mctabs[server]["txt"], f"{server}はまだ開始されていません\n")
             return
         if self.running_p[server].poll()!=None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはすでに停止しています\n")
-            else:self.builder.insert("", self.mctabs[server][2], f"{server}はすでに停止しています\n")
+            else:self.builder.insert("", self.mctabs[server]["txt"], f"{server}はすでに停止しています\n")
             return
         if server=="proxy":
             self.running_p[server].stdin.write("end\n")
@@ -341,11 +341,11 @@ class main(ttk.Notebook):
     def kill(self, server="proxy"):
         if self.running_p[server]==None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
-            else:self.builder.insert("", self.mctabs[server][2], f"{server}はまだ開始されていません\n")
+            else:self.builder.insert("", self.mctabs[server]["txt"], f"{server}はまだ開始されていません\n")
             return
         if self.running_p[server].poll()!=None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはすでに停止しています\n")
-            else:self.builder.insert("", self.mctabs[server][2], f"{server}はすでに停止しています\n")
+            else:self.builder.insert("", self.mctabs[server]["txt"], f"{server}はすでに停止しています\n")
             return
         self.running_p[server].terminate()
         #self.running_p[server].kill()
@@ -404,31 +404,45 @@ class main(ttk.Notebook):
         if version==None:version = self.verbox.get()
         if ram==None:ram = self.rament.get()
         if name in self.mctabs:
-            self.select(self.mctabs[name][0])
+            self.select(self.mctabs[name]["frame"])
             return
         if name == "":return
         root.app.btn["state"] = "disabled"
         self.running_p[name]=None
-        self.mctabs[name] = [tk.Frame(self)]
-        self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
-        self.add(self.mctabs[name][0], text=name)
-        self.mctabs[name].append(tk.Label(self.mctabs[name][0], text="", font=FONT))
-        self.mctabs[name][1].grid(column=0, row=0, sticky=tk.EW)
-        self.mctabs[name].append(scrolledtext.ScrolledText(self.mctabs[name][0], state="disabled", font=("Yu Gothic UI", 10, "normal")))
-        self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
-        #self.mctabs[name][0].grid_columnconfigure(0, weight=1)
-        self.mctabs[name][0].grid_rowconfigure(1, weight=1)
+        """#TODO
+        namae: {
+            "frame":tk.frame(self),
+            "lbl": tk.Label
+            "txt": tk.text
+            "btnframe":{
+                "frame": tk.frame(frame)
+                "btn1":~~
+            }
+        }
+        """
+        self.mctabs[name] = {}
+        self.mctabs[name]["frame"] = tk.Frame(self)
+        self.mctabs[name]["frame"].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
+        self.add(self.mctabs[name]["frame"], text=name)
+        self.mctabs[name]["lbl"] = tk.Label(self.mctabs[name]["frame"], text="", font=FONT)
+        self.mctabs[name]["lbl"].grid(column=0, row=0, sticky=tk.EW)
+        self.mctabs[name]["txt"] = scrolledtext.ScrolledText(self.mctabs[name]["frame"], state="disabled", font=("Yu Gothic UI", 10, "normal"))
+        self.mctabs[name]["txt"].grid(column=0, row=1, sticky=tk.NSEW)
+        self.mctabs[name]["frame"].grid_rowconfigure(1, weight=1)
+        self.mctabs[name]["btnframe"] = {}
+        self.mctabs[name]["btnframe"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
+        self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=2, sticky=tk.EW)
+        self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start())
+        self.mctabs[name]["btnframe"]["run"].grid(column=0, row=0)
+        self.mctabs[name]["btnframe"]["stop"] = ttk.Button(self.mctabs[name]["btnframe"], text="Stop", style='my.TButton', command=lambda: self.stop(name))
+        self.mctabs[name]["btnframe"]["stop"].grid(column=1, row=0)
+        self.mctabs[name]["btnframe"]["kill"] = ttk.Button(self.mctabs[name]["btnframe"], text="Kill", style='my.TButton', command=lambda: self.kill(name))
+        self.mctabs[name]["btnframe"]["kill"].grid(column=2, row=0)
+        self.mctabs[name]["panel"] = {}
+        self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
+        self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
+        print(self.mctabs)
         if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
-        self.mctabs[name].append(tk.Frame(self.mctabs[name][0]))
-        self.mctabs[name][3].grid(column=0, row=2, sticky=tk.EW)
-        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start()))
-        self.mctabs[name][4].grid(column=0, row=0)
-        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Stop", style='my.TButton', command=lambda: self.stop(name)))
-        self.mctabs[name][5].grid(column=1, row=0)
-        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Kill", style='my.TButton', command=lambda: self.kill(name)))
-        self.mctabs[name][6].grid(column=2, row=0)
-        self.mctabs[name].append(ttk.Frame(self.mctabs[name][0]))
-        self.mctabs[name][7].grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
