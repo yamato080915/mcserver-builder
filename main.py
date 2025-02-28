@@ -78,7 +78,7 @@ class build:
         shutil.move("__cache__/mcserver-updater-main/main.py", "./updater.py")
         shutil.move("__cache__/mcserver-updater-main/README.md", "./README.md")
         root.app.pbar0["value"]+=1
-    def insert(self, state, box, text):
+    def insert(self, state="", box=None, text=""):
         box.config(state="normal")
         box.insert('end', text)
         root.bottom["text"] = state + text.replace("\n", "")
@@ -280,7 +280,7 @@ class main(ttk.Notebook):
         if server=="proxy":
             self.select(self.proxytab)
         else:
-            self.select(server)
+            self.select(self.mctabs[server][0])
         os.chdir(self.folder)
         if OS=="Windows":
             self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -290,10 +290,6 @@ class main(ttk.Notebook):
                         line = line.strip()
                         self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
                         self.proxylog.see(tk.END)
-                        """
-                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
-                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()"""
                     except:
                         break
             else:
@@ -302,10 +298,6 @@ class main(ttk.Notebook):
                         line = line.strip()
                         self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
                         self.mctabs[server][2].see(tk.END)
-                        """
-                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
-                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()"""
                     except:
                         break
         else:
@@ -322,10 +314,6 @@ class main(ttk.Notebook):
                         line = line.strip()
                         self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
                         self.proxylog.see(tk.END)
-                        """
-                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
-                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()"""
                     except:
                         break
             else:
@@ -334,20 +322,33 @@ class main(ttk.Notebook):
                         line = line.strip()
                         self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
                         self.mctabs[server][2].see(tk.END)
-                        """
-                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
-                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()"""
                     except:
                         break
     def stop(self, server="proxy"):
+        if self.running_p[server]==None:
+            if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
+            else:self.builder.insert("", self.mctabs[server][2], f"{server}はまだ開始されていません\n")
+            return
+        if self.running_p[server].poll()!=None:
+            if server=="proxy":self.builder.insert("", self.proxylog, "velocityはすでに停止しています\n")
+            else:self.builder.insert("", self.mctabs[server][2], f"{server}はすでに停止しています\n")
+            return
         if server=="proxy":
             self.running_p[server].stdin.write("end\n")
         else:
             self.running_p[server].stdin.write("stop\n")
         self.running_p[server].stdin.flush()
     def kill(self, server="proxy"):
-        self.running_p[server].kill()
+        if self.running_p[server]==None:
+            if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
+            else:self.builder.insert("", self.mctabs[server][2], f"{server}はまだ開始されていません\n")
+            return
+        if self.running_p[server].poll()!=None:
+            if server=="proxy":self.builder.insert("", self.proxylog, "velocityはすでに停止しています\n")
+            else:self.builder.insert("", self.mctabs[server][2], f"{server}はすでに停止しています\n")
+            return
+        self.running_p[server].terminate()
+        #self.running_p[server].kill()
         self.running_p[server] = None
     def setup(self):
         self.builder = build(folder=self.folder)
@@ -415,9 +416,19 @@ class main(ttk.Notebook):
         self.mctabs[name][1].grid(column=0, row=0, sticky=tk.EW)
         self.mctabs[name].append(scrolledtext.ScrolledText(self.mctabs[name][0], state="disabled", font=("Yu Gothic UI", 10, "normal")))
         self.mctabs[name][2].grid(column=0, row=1, sticky=tk.NSEW)
-        self.mctabs[name][0].grid_columnconfigure(0, weight=1)
+        #self.mctabs[name][0].grid_columnconfigure(0, weight=1)
         self.mctabs[name][0].grid_rowconfigure(1, weight=1)
         if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
+        self.mctabs[name].append(tk.Frame(self.mctabs[name][0]))
+        self.mctabs[name][3].grid(column=0, row=2, sticky=tk.EW)
+        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start()))
+        self.mctabs[name][4].grid(column=0, row=0)
+        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Stop", style='my.TButton', command=lambda: self.stop(name)))
+        self.mctabs[name][5].grid(column=1, row=0)
+        self.mctabs[name].append(ttk.Button(self.mctabs[name][3], text="Kill", style='my.TButton', command=lambda: self.kill(name)))
+        self.mctabs[name][6].grid(column=2, row=0)
+        self.mctabs[name].append(ttk.Frame(self.mctabs[name][0]))
+        self.mctabs[name][7].grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
