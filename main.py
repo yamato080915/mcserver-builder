@@ -94,7 +94,7 @@ class build:
         self.jsonData = {"file": "./proxy/server.jar", "software": "velocity", "version": "", "build": 0, "jdk": "..\\jdk\\jdk21\\bin\\java".replace("\\","/" if OS!="Windows" else "\\"), "RAM": "512M"}
         with open("proxy.json", "w", encoding="utf-8") as f:
             json.dump(self.jsonData, f, indent=4)
-        cmdData = "@echo off\npy updater.py proxy.json\nIF %ERRORLEVEL% == 0 (\n    cd proxy\n    ..\\jdk\\jdk21\\bin\\java -Xmx512M -Xms512M -jar server.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
+        cmdData = "@echo off\npy updater.py proxy.json\nIF %ERRORLEVEL% == 0 (\n    cd proxy\n    ..\\jdk\\jdk21\\bin\\java -Xmx512M -Xms512M -jar server.jar nogui\n) ELSE (\n    echo %ERRORLEVEL%\n)"
         with open("./proxy.cmd", "w", encoding="utf-8") as f:
             f.write(cmdData)
         p = subprocess.Popen([pypath, "updater.py", "proxy.json"], stdout=subprocess.PIPE, text=True)
@@ -147,7 +147,7 @@ class build:
         self.jsonData = {"file": f"{name}/{software}.jar", "software": software, "version": version, "build": 0, "version-up": False, "jdk": self.path, "RAM": ram}
         with open(f"{name}.json", "w", encoding="utf-8") as f:
             json.dump(self.jsonData, f, indent=4)
-        cmdData = f"@echo off\npy updater.py {name}.json\nIF %ERRORLEVEL% == 0 (\n    cd {name}\n    {self.path} -Xmx{ram} -Xms{ram} -jar {software}.jar nogui\n    pause\n) ELSE (\n    echo %ERRORLEVEL%\n    pause\n)"
+        cmdData = f"@echo off\npy updater.py {name}.json\nIF %ERRORLEVEL% == 0 (\n    cd {name}\n    {self.path} -Xmx{ram} -Xms{ram} -jar {software}.jar nogui\n) ELSE (\n    echo %ERRORLEVEL%\n)"
         with open(f"./{name}.cmd", "w", encoding="utf-8") as f:
             f.write(cmdData)
         if not os.path.isdir(name):os.mkdir(name)
@@ -222,6 +222,7 @@ class build:
 class main(ttk.Notebook):
     def __init__(self, master=None, folder="server"):
         super().__init__(master)
+        self.running_p = {"proxy": None}
         self.folder = folder
         self.dlstart = 0
         self.s = ttk.Style()
@@ -264,9 +265,9 @@ class main(ttk.Notebook):
         self.btnframe.grid(column=0, row=2, sticky=tk.EW)
         self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner("proxy"), name="run").start())
         self.proxyrun.grid(column=0, row=0)
-        self.proxyend = ttk.Button(self.btnframe, text="Stop", style='my.TButton')
+        self.proxyend = ttk.Button(self.btnframe, text="Stop", style='my.TButton', command=lambda: self.stop("proxy"))
         self.proxyend.grid(column=1, row=0)
-        self.proxyend = ttk.Button(self.btnframe, text="Kill", style='my.TButton')
+        self.proxyend = ttk.Button(self.btnframe, text="Kill", style='my.TButton', command=lambda: self.kill("proxy"))
         self.proxyend.grid(column=2, row=0)
         self.proxypanel = ttk.Frame(self.proxytab)
         self.proxypanel.grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
@@ -281,35 +282,73 @@ class main(ttk.Notebook):
         else:
             self.select(server)
         os.chdir(self.folder)
-        with open(f"./{server}.json", "r", encoding="utf-8") as f:
-            jsondata = json.load(f)
         if OS=="Windows":
-            p = subprocess.Popen([f"{server}.cmd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
+            self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if server=="proxy":
-                for line in iter(p.stdout.readline, ''):
+                for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
-                        self.insert(f"Running {server} Server...", self.proxylog, line + '\n')
+                        self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
                         self.proxylog.see(tk.END)
+                        """
                         if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
                             p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()
+                            p.stdin.flush()"""
                     except:
                         break
             else:
-                for line in iter(p.stdout.readline, ''):
+                for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
-                        self.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
+                        self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
                         self.mctabs[server][2].see(tk.END)
+                        """
                         if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
                             p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
-                            p.stdin.flush()
+                            p.stdin.flush()"""
                     except:
                         break
         else:
-            print("run")
-
+            with open(f"./{server}.json", "r", encoding="utf-8") as f:
+                jsondata = json.load(f)
+            p = subprocess.Popen(["python", "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
+            p.wait()
+            if server=="proxy":
+                if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
+                if not "ram" in jsondata:jsondata["ram"] = "512M"
+                self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xmx{jsondata["ram"]}", "-jar", jsondata["file"], "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
+                for line in iter(self.running_p[server].stdout.readline, ''):
+                    try:
+                        line = line.strip()
+                        self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
+                        self.proxylog.see(tk.END)
+                        """
+                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
+                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
+                            p.stdin.flush()"""
+                    except:
+                        break
+            else:
+                for line in iter(self.running_p[server].stdout.readline, ''):
+                    try:
+                        line = line.strip()
+                        self.builder.insert(f"Running {server} Server...", self.mctabs[server][2], line + '\n')
+                        self.mctabs[server][2].see(tk.END)
+                        """
+                        if (server=="proxy" and "Done" in line) or (server!="proxy" and ("Timings Reset" in line or 'For help, type "help"' in line)):
+                            p.stdin.write(f"{'end' if server=='proxy' else 'stop'}\n")
+                            p.stdin.flush()"""
+                    except:
+                        break
+    def stop(self, server="proxy"):
+        if server=="proxy":
+            self.running_p[server].stdin.write("end\n")
+        else:
+            self.running_p[server].stdin.write("stop\n")
+        self.running_p[server].stdin.flush()
+    def kill(self, server="proxy"):
+        self.running_p[server].kill()
+        self.running_p[server] = None
     def setup(self):
         self.builder = build(folder=self.folder)
         self.pframe.grid_forget()
@@ -368,6 +407,7 @@ class main(ttk.Notebook):
             return
         if name == "":return
         root.app.btn["state"] = "disabled"
+        self.running_p[name]=None
         self.mctabs[name] = [tk.Frame(self)]
         self.mctabs[name][0].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.add(self.mctabs[name][0], text=name)
