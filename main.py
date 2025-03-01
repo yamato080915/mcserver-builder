@@ -256,7 +256,6 @@ class main(ttk.Notebook):
         self.pframe.grid_columnconfigure(0, weight=1)
         #PROXYTAB--------------------------------------------------------------
         self.proxytab = tk.Frame(self)
-        self.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
         self.proxylbl = tk.Label(self.proxytab, text="", font=FONT)
         self.proxylbl.grid(column=0, row=0, sticky=tk.EW)
         self.proxylog = scrolledtext.ScrolledText(self.proxytab, state="disabled", font=("Yu Gothic UI", 10, "normal"))
@@ -353,6 +352,7 @@ class main(ttk.Notebook):
         self.running_p[server] = None
     def setup(self):
         self.builder = build(app=self, folder=self.folder)
+        self.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
         self.add(self.proxytab, text="proxy")
         self.pframe.grid_forget()
         self.pbar["value"] = 0
