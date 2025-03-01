@@ -303,7 +303,7 @@ class main(ttk.Notebook):
         else:
             with open(f"./{server}.json", "r", encoding="utf-8") as f:
                 jsondata = json.load(f)
-            p = subprocess.Popen(["python", "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
+            p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
             p.wait()
             if server=="proxy":
                 if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
