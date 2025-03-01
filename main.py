@@ -4,6 +4,8 @@ from urllib import request
 import tkinter as tk
 from tkinter import ttk, filedialog, scrolledtext
 
+arg = sys.argv
+
 FONT = ("Yu Gothic UI", 12, "normal")
 
 urls = {
@@ -273,7 +275,6 @@ class main(ttk.Notebook):
         self.proxypanel.grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
         #MAIN PROCESS----------------------------------------------------------
         self.add(self.buildtab, text="BUILD")
-        self.add(self.proxytab, text="proxy")
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
     def server_runner(self, server="proxy"):
@@ -352,6 +353,7 @@ class main(ttk.Notebook):
         self.running_p[server] = None
     def setup(self):
         self.builder = build(app=self, folder=self.folder)
+        self.add(self.proxytab, text="proxy")
         self.pframe.grid_forget()
         self.pbar["value"] = 0
         self.pbar0["value"] = 0
@@ -441,7 +443,6 @@ class main(ttk.Notebook):
         self.mctabs[name]["panel"] = {}
         self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
-        print(self.mctabs)
         if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
