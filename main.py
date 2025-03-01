@@ -309,7 +309,7 @@ class main(ttk.Notebook):
             if server=="proxy":
                 if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
                 if not "ram" in jsondata:jsondata["ram"] = "512M"
-                self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xmx{jsondata["ram"]}", "-jar", jsondata["file"], "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, text=True)
+                self.running_p[server] = subprocess.Popen([jsondata["jdk"][1:], f"-Xmx{jsondata["ram"]}", f"-Xmx{jsondata["ram"]}", "-jar", jsondata["file"], "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
