@@ -38,12 +38,12 @@ def folderclear(folder):
     os.mkdir(folder)
 
 class build:
-    def __init__(self, folder="server"):
+    def __init__(self, app=None, folder="server"):
         self.folder = folder
         self.proxy = False
         self.secret = ""
         self.setup(folder)
-        self.install()
+        self.install(app)
         folderclear("__cache__")
         self.versions = {"purpur": list(json.loads(requests.get(urls["purpur"]).text)["versions"]), "paper": list(json.loads(requests.get(urls["paper"]).text)["versions"])}
         self.jdkpath = {
@@ -59,18 +59,18 @@ class build:
             os.mkdir("__cache__")
         if not os.path.isdir("jdk"):
             os.mkdir("jdk")
-    def install(self):#root.app.dlhook
+    def install(self, app=None):
         for i in urls["jdk"]:
-            root.app.progress0["text"]=f"Downloading {i[0]}"
+            app.progress0["text"]=f"Downloading {i[0]}"
             if not os.path.isdir(f"jdk/{i[0]}"):
-                root.app.dlstart = time.perf_counter()
-                th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=root.app.dlhook), name="download", daemon=True)
+                app.dlstart = time.perf_counter()
+                th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=app.dlhook), name="download", daemon=True)
                 th.start()
                 th.join()
                 shutil.unpack_archive(f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', "jdk")
                 shutil.move(f"./jdk/{i[2]}", f"./jdk/{i[0]}")
-            root.app.pbar0["value"]+=1
-        root.app.progress0["text"] = "updating mcserver-updater" if os.path.isfile("updater.py") else "installing mcserver-updater"
+            app.pbar0["value"]+=1
+        app.progress0["text"] = "updating mcserver-updater" if os.path.isfile("updater.py") else "installing mcserver-updater"
         with open("__cache__/updater.zip", "wb") as f:
             f.write(requests.get(urls["updater"]).content)
         shutil.unpack_archive("__cache__/updater.zip", "./__cache__")
@@ -351,7 +351,7 @@ class main(ttk.Notebook):
         #self.running_p[server].kill()
         self.running_p[server] = None
     def setup(self):
-        self.builder = build(folder=self.folder)
+        self.builder = build(app=self, folder=self.folder)
         self.pframe.grid_forget()
         self.pbar["value"] = 0
         self.pbar0["value"] = 0
@@ -473,7 +473,7 @@ class window(tk.Tk):
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
         self.folder = filedialog.askdirectory(initialdir="./", title="Select a server directory")
-        if self.folder=="":
+        if self.folder=="" or self.folder==():
             sys.exit()
 
 if __name__=="__main__":
