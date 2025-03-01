@@ -26,7 +26,7 @@ jdkurls = {
         ]
 }
 OS = platform.system()
-pypath = f'py{"thon" if OS!="Windows" else ""}'
+pypath = f'py{"thon3" if OS!="Windows" else ""}'
 
 if not OS in list(jdkurls.keys()):
     sys.exit("Unsupported OS")
