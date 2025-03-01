@@ -411,17 +411,6 @@ class main(ttk.Notebook):
         if name == "":return
         root.app.btn["state"] = "disabled"
         self.running_p[name]=None
-        """#TODO
-        namae: {
-            "frame":tk.frame(self),
-            "lbl": tk.Label
-            "txt": tk.text
-            "btnframe":{
-                "frame": tk.frame(frame)
-                "btn1":~~
-            }
-        }
-        """
         self.mctabs[name] = {}
         self.mctabs[name]["frame"] = tk.Frame(self)
         self.mctabs[name]["frame"].grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
@@ -431,9 +420,18 @@ class main(ttk.Notebook):
         self.mctabs[name]["txt"] = scrolledtext.ScrolledText(self.mctabs[name]["frame"], state="disabled", font=("Yu Gothic UI", 10, "normal"))
         self.mctabs[name]["txt"].grid(column=0, row=1, sticky=tk.NSEW)
         self.mctabs[name]["frame"].grid_rowconfigure(1, weight=1)
+        self.mctabs[name]["shell"] = {}
+        self.mctabs[name]["shell"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
+        self.mctabs[name]["shell"]["frame"].grid(column=0, row=2, sticky=tk.EW)
+        self.mctabs[name]["shell"]["entry"] = ttk.Entry(self.mctabs[name]["shell"]["frame"])
+        self.mctabs[name]["shell"]["entry"].grid(column=0, row=0, sticky=tk.EW)
+        self.mctabs[name]["shell"]["entry"].bind("<Return>", lambda event: (self.running_p[name].stdin.write(self.mctabs[name]["shell"]["entry"].get()), self.running_p[name].stdin.flush()))#TODO
+        self.mctabs[name]["shell"]["btn"] = ttk.Button(self.mctabs[name]["shell"]["frame"], text="input")
+        self.mctabs[name]["shell"]["btn"].grid(column=1, row=0)
+        self.mctabs[name]["shell"]["frame"].grid_columnconfigure(0, weight=1)
         self.mctabs[name]["btnframe"] = {}
         self.mctabs[name]["btnframe"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
-        self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=2, sticky=tk.EW)
+        self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=3, sticky=tk.EW)
         self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start())
         self.mctabs[name]["btnframe"]["run"].grid(column=0, row=0)
         self.mctabs[name]["btnframe"]["stop"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Stop", style='my.TButton', command=lambda: self.stop(name))
@@ -442,7 +440,7 @@ class main(ttk.Notebook):
         self.mctabs[name]["btnframe"]["kill"].grid(column=2, row=0)
         self.mctabs[name]["panel"] = {}
         self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
-        self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
+        self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
         if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
