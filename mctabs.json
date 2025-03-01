@@ -1,0 +1,16 @@
+{
+    "lobby": {
+        "frame": <tkinter.Frame object .!main.!frame3>, 
+        "lbl": <tkinter.Label object .!main.!frame3.!label>, 
+        "txt": <tkinter.scrolledtext.ScrolledText object .!main.!frame3.!frame.!scrolledtext>, 
+        "btnframe": {
+            "frame": <tkinter.Frame object .!main.!frame3.!frame2>, 
+            "run": <tkinter.ttk.Button object .!main.!frame3.!frame2.!button>, 
+            "stop": <tkinter.ttk.Button object .!main.!frame3.!frame2.!button2>, 
+            "kill": <tkinter.ttk.Button object .!main.!frame3.!frame2.!button3>
+        }, 
+        "panel": {
+            "frame": <tkinter.ttk.Frame object .!main.!frame3.!frame3>
+        }
+    }
+}
