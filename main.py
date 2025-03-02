@@ -497,7 +497,7 @@ class window(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
-        root.wait_visibility()
+        self.wait_visibility()
         self.folder = filedialog.askdirectory(initialdir="./", title="Select a server directory")
         if self.folder=="" or self.folder==():
             sys.exit()
