@@ -294,8 +294,8 @@ class main(ttk.Notebook):
             self.select(self.proxytab)
         else:
             self.select(self.mctabs[server]["frame"])
-        os.chdir(self.folder)
         if OS=="Windows":
+            os.chdir(self.folder)
             self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if server=="proxy":
                 for line in iter(self.running_p[server].stdout.readline, ''):
@@ -316,8 +316,10 @@ class main(ttk.Notebook):
         else:
             with open(f"./{server}.json", "r", encoding="utf-8") as f:
                 jsondata = json.load(f)
+            os.chdir(self.folder)
             p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
             p.wait()
+            os.chdir(self.folder)
             file = os.path.abspath(jsondata["file"])
             os.chdir(server)
             if server=="proxy":
