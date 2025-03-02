@@ -484,7 +484,7 @@ class main(ttk.Notebook):
     def shell(self, name, event=None):
         entry = self.mctabs[name]["shell"]["entry"].get()
         if self.running_p[name]!=None and self.running_p[name].poll()==None:
-            self.running_p[name].stdin.write(entry)
+            self.running_p[name].stdin.write(f"{entry}\n")
             self.running_p[name].stdin.flush()
             self.mctabs[name]["txt"].see(tk.END)
 
