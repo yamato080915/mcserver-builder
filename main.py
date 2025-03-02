@@ -488,6 +488,8 @@ class main(ttk.Notebook):
             entry = self.shellent.get()
         else:
             entry = self.mctabs[name]["shell"]["entry"].get()
+        if entry[0]=="/":
+            entry = entry[1:]
         if self.running_p[name]!=None and self.running_p[name].poll()==None:
             self.running_p[name].stdin.write(f"{entry}\n")
             self.running_p[name].stdin.flush()
