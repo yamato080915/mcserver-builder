@@ -265,10 +265,18 @@ class main(ttk.Notebook):
         self.proxylbl.grid(column=0, row=0, sticky=tk.EW)
         self.proxylog = scrolledtext.ScrolledText(self.proxytab, state="disabled", font=("Yu Gothic UI", 10, "normal"))
         self.proxylog.grid(column=0, row=1, sticky=tk.NSEW)
+        self.shellframe = tk.Frame(self.proxytab)
+        self.shellframe.grid(column=0, row=2, sticky=tk.EW)
+        self.shelllbl = tk.Label(self.shellframe, text="Enterキーで送信", font=FONT)
+        self.shelllbl.grid(column=0, row=0, sticky=tk.EW)
+        self.shellent = tk.Entry(self.shellframe, font=FONT)
+        self.shellent.grid(column=1, row=0, sticky=tk.EW)
+        self.shellent.bind("<Return>", lambda event: self.shell("proxy"))#TODO
+        self.shellframe.grid_columnconfigure(1, weight=1)
         #self.proxytab.grid_columnconfigure(0, weight=1)
         self.proxytab.grid_rowconfigure(1, weight=1)
         self.btnframe = tk.Frame(self.proxytab)
-        self.btnframe.grid(column=0, row=2, sticky=tk.EW)
+        self.btnframe.grid(column=0, row=3, sticky=tk.EW)
         self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner("proxy"), name="run").start())
         self.proxyrun.grid(column=0, row=0)
         self.proxyend = ttk.Button(self.btnframe, text="Stop", style='my.TButton', command=lambda: self.stop("proxy"))
@@ -276,7 +284,7 @@ class main(ttk.Notebook):
         self.proxyend = ttk.Button(self.btnframe, text="Kill", style='my.TButton', command=lambda: self.kill("proxy"))
         self.proxyend.grid(column=2, row=0)
         self.proxypanel = ttk.Frame(self.proxytab)
-        self.proxypanel.grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
+        self.proxypanel.grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
         #MAIN PROCESS----------------------------------------------------------
         self.add(self.buildtab, text="BUILD")
         self.mctabs = {}
@@ -429,12 +437,14 @@ class main(ttk.Notebook):
         self.mctabs[name]["shell"] = {}
         self.mctabs[name]["shell"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["shell"]["frame"].grid(column=0, row=2, sticky=tk.EW)
-        self.mctabs[name]["shell"]["entry"] = tk.Entry(self.mctabs[name]["shell"]["frame"])
-        self.mctabs[name]["shell"]["entry"].grid(column=0, row=0, sticky=tk.EW)
+        self.mctabs[name]["shell"]["lbl"] = tk.Label(self.mctabs[name]["shell"]["frame"], text="Enterキーで送信", font=FONT)
+        self.mctabs[name]["shell"]["lbl"].grid(column=0, row=0, sticky=tk.EW)
+        self.mctabs[name]["shell"]["entry"] = tk.Entry(self.mctabs[name]["shell"]["frame"], font=FONT)
+        self.mctabs[name]["shell"]["entry"].grid(column=1, row=0, sticky=tk.EW)
         self.mctabs[name]["shell"]["entry"].bind("<Return>", lambda event: self.shell(name))#TODO
-        self.mctabs[name]["shell"]["btn"] = ttk.Button(self.mctabs[name]["shell"]["frame"], text="input")
-        self.mctabs[name]["shell"]["btn"].grid(column=1, row=0)
-        self.mctabs[name]["shell"]["frame"].grid_columnconfigure(0, weight=1)
+        #self.mctabs[name]["shell"]["btn"] = ttk.Button(self.mctabs[name]["shell"]["frame"], text="input")
+        #self.mctabs[name]["shell"]["btn"].grid(column=1, row=0)
+        self.mctabs[name]["shell"]["frame"].grid_columnconfigure(1, weight=1)
         self.mctabs[name]["btnframe"] = {}
         self.mctabs[name]["btnframe"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=3, sticky=tk.EW)
@@ -487,6 +497,7 @@ class window(tk.Tk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
+        root.wait_visibility()
         self.folder = filedialog.askdirectory(initialdir="./", title="Select a server directory")
         if self.folder=="" or self.folder==():
             sys.exit()
