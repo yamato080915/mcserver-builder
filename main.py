@@ -318,10 +318,12 @@ class main(ttk.Notebook):
                 jsondata = json.load(f)
             p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
             p.wait()
+            file = os.path.abspath(jsondata["path"])
+            os.chdir(server)
             if server=="proxy":
                 if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
                 if not "ram" in jsondata:jsondata["ram"] = "512M"
-                self.running_p[server] = subprocess.Popen([jsondata["jdk"][1:], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", jsondata["file"], "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+                self.running_p[server] = subprocess.Popen([jsondata["jdk"][1:], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
@@ -334,7 +336,7 @@ class main(ttk.Notebook):
                 software = jsondata["software"]
                 if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
                 if not "ram" in jsondata:jsondata["ram"] = "4G"
-                self.running_p[server] = subprocess.Popen([jsondata["jdk"][1:], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", jsondata["file"], "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+                self.running_p[server] = subprocess.Popen([jsondata["jdk"][1:], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
                         line = line.strip()
