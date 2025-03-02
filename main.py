@@ -87,6 +87,8 @@ class build:
         #[:30]}{"" if len(text)<=30 else "..."}"
         box.config(state="disabled")
     def build_proxy(self):
+        root.app.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
+        root.app.add(root.app.proxytab, text="proxy")
         os.chdir(f"{self.folder}")
         root.app.btn["state"] = "disabled"
         root.app.proxylbl["text"] = "Building Velocity Server..."
@@ -179,6 +181,9 @@ class build:
         p.wait()
         self.velocity_setting(name)
         root.app.btn["state"] = "enabled"
+        root.app.proxyrun["state"] = "enabled"
+        for i in list(root.app.mctabs.keys()):
+            root.app.mctabs[i]["btnframe"]["run"]["state"] = "enabled"
         root.bottom["text"] = f"Building {name} Server...Complete!"
     def velocity_setting(self, name="lobby"):
         if not self.proxy:return
@@ -352,8 +357,6 @@ class main(ttk.Notebook):
         self.running_p[server] = None
     def setup(self):
         self.builder = build(app=self, folder=self.folder)
-        self.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
-        self.add(self.proxytab, text="proxy")
         self.pframe.grid_forget()
         self.pbar["value"] = 0
         self.pbar0["value"] = 0
@@ -363,11 +366,14 @@ class main(ttk.Notebook):
         self.btn = ttk.Button(self.buildtab, text="Build", style='my.TButton', command=lambda: threading.Thread(target=self.builder.build_proxy, name="build proxy", daemon=True).start())
         self.btn.grid(column=1, row=0, padx=10, pady=10)
         servers = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob(f"{self.folder}/*.json") if os.path.isdir(f"{self.folder}/{os.path.splitext(os.path.basename(x))[0]}") and os.path.basename(x)!="proxy.json"]
+        if os.path.isdir(f"{self.folder}/proxy"):
+            root.app.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
+            root.app.add(root.app.proxytab, text="proxy")
         for i in servers:
             with open(f"{self.folder}/{i}.json", "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self.addtab(name=i, software=data["software"], version=data["version"], ram=data["RAM"], bld=False)
-        if os.path.isdir(f"{self.folder}/proxy"):
+        if os.path.isdir(f"{self.folder}/proxy") or len(servers)!=0:
             self.mcbuild()
         #mcserverのフォルダを取得してタブを作成
     def mcbuild(self):
@@ -423,9 +429,9 @@ class main(ttk.Notebook):
         self.mctabs[name]["shell"] = {}
         self.mctabs[name]["shell"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["shell"]["frame"].grid(column=0, row=2, sticky=tk.EW)
-        self.mctabs[name]["shell"]["entry"] = ttk.Entry(self.mctabs[name]["shell"]["frame"])
+        self.mctabs[name]["shell"]["entry"] = tk.Entry(self.mctabs[name]["shell"]["frame"])
         self.mctabs[name]["shell"]["entry"].grid(column=0, row=0, sticky=tk.EW)
-        self.mctabs[name]["shell"]["entry"].bind("<Return>", lambda event: (self.running_p[name].stdin.write(self.mctabs[name]["shell"]["entry"].get()), self.running_p[name].stdin.flush()))#TODO
+        self.mctabs[name]["shell"]["entry"].bind("<Return>", lambda event: self.shell(name))#TODO
         self.mctabs[name]["shell"]["btn"] = ttk.Button(self.mctabs[name]["shell"]["frame"], text="input")
         self.mctabs[name]["shell"]["btn"].grid(column=1, row=0)
         self.mctabs[name]["shell"]["frame"].grid_columnconfigure(0, weight=1)
@@ -441,7 +447,11 @@ class main(ttk.Notebook):
         self.mctabs[name]["panel"] = {}
         self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
-        if bld:threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
+        if bld:
+            self.proxyrun["state"]="disabled"
+            for i in list(self.mctabs.keys()):
+                self.mctabs[i]["btnframe"]["run"]["state"] = "disabled"
+            threading.Thread(target=lambda: self.builder.build_mcserver(name=name, software=software, version=version, ram=ram), name="build server", daemon=True).start()
     def dlhook(self, block_count, block_size, total_size):
         dltime = time.perf_counter()-self.dlstart
         self.pbar.configure(maximum=total_size)
@@ -454,6 +464,12 @@ class main(ttk.Notebook):
         self.verbox.configure(values=list(reversed(self.builder.versions[self.softbox.get()])))
         if not self.verbox.get() in list(reversed(self.builder.versions[self.softbox.get()])):
             self.verbox.set(list(reversed(self.builder.versions[self.softbox.get()]))[0])
+    def shell(self, name, event=None):
+        entry = self.mctabs[name]["shell"]["entry"].get()
+        if self.running_p[name]!=None and self.running_p[name].poll()==None:
+            self.running_p[name].stdin.write(entry)
+            self.running_p[name].stdin.flush()
+            self.mctabs[name]["txt"].see(tk.END)
 
 class window(tk.Tk):
     def __init__(self):
