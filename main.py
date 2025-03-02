@@ -314,9 +314,9 @@ class main(ttk.Notebook):
                     except:
                         break
         else:
+            os.chdir(self.folder)
             with open(f"./{server}.json", "r", encoding="utf-8") as f:
                 jsondata = json.load(f)
-            os.chdir(self.folder)
             p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
             p.wait()
             os.chdir(self.folder)
@@ -484,11 +484,17 @@ class main(ttk.Notebook):
         if not self.verbox.get() in list(reversed(self.builder.versions[self.softbox.get()])):
             self.verbox.set(list(reversed(self.builder.versions[self.softbox.get()]))[0])
     def shell(self, name, event=None):
-        entry = self.mctabs[name]["shell"]["entry"].get()
+        if name=="proxy":
+            entry = self.shellent.get()
+        else:
+            entry = self.mctabs[name]["shell"]["entry"].get()
         if self.running_p[name]!=None and self.running_p[name].poll()==None:
             self.running_p[name].stdin.write(f"{entry}\n")
             self.running_p[name].stdin.flush()
-            self.mctabs[name]["txt"].see(tk.END)
+            if name=="proxy":
+                self.proxylog.see(tk.END)
+            else:
+                self.mctabs[name]["txt"].see(tk.END)
 
 class window(tk.Tk):
     def __init__(self):
