@@ -180,10 +180,10 @@ class build:
                 break
         p.wait()
         self.velocity_setting(name)
-        root.app.btn["state"] = "enabled"
-        root.app.proxyrun["state"] = "enabled"
+        root.app.btn["state"] = "normal"
+        root.app.proxyrun["state"] = "normal"
         for i in list(root.app.mctabs.keys()):
-            root.app.mctabs[i]["btnframe"]["run"]["state"] = "enabled"
+            root.app.mctabs[i]["btnframe"]["run"]["state"] = "normal"
         root.bottom["text"] = f"Building {name} Server...Complete!"
     def velocity_setting(self, name="lobby"):
         if not self.proxy:return
@@ -202,7 +202,7 @@ class build:
         with open(yml, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         self.insert(f"Setting {name} Server for velocity...", root.app.mctabs[name]["txt"], "set paper.yml\n")
-        config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["enabled"] = True
+        config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["normal"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["online-mode"] = True
         config["settings" if yml=="paper.yml" else "proxies"][f'velocity{"-support" if yml=="paper.yml" else ""}']["secret"] = self.secret
         with open(yml, "w", encoding="utf-8") as f:
@@ -292,8 +292,10 @@ class main(ttk.Notebook):
     def server_runner(self, server="proxy"):
         if server=="proxy":
             self.select(self.proxytab)
+            self.proxyrun["state"] = "disabled"
         else:
             self.select(self.mctabs[server]["frame"])
+            self.mctabs[server]["btnframe"]["run"]["state"] = "disabled"
         if OS=="Windows":
             os.chdir(self.folder)
             self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -305,6 +307,7 @@ class main(ttk.Notebook):
                         self.proxylog.see(tk.END)
                     except:
                         break
+                self.proxyrun["state"] = "normal"
             else:
                 for line in iter(self.running_p[server].stdout.readline, ''):
                     try:
@@ -313,6 +316,7 @@ class main(ttk.Notebook):
                         self.mctabs[server]["txt"].see(tk.END)
                     except:
                         break
+                self.mctabs[server]["btnframe"]["run"]["state"] = "normal"
         else:
             os.chdir(self.folder)
             with open(f"./{server}.json", "r", encoding="utf-8") as f:
@@ -333,6 +337,7 @@ class main(ttk.Notebook):
                         self.proxylog.see(tk.END)
                     except:
                         break
+                self.proxyrun["state"] = "normal"
             else:
                 version = jsondata["version"]
                 software = jsondata["software"]
@@ -346,6 +351,7 @@ class main(ttk.Notebook):
                         self.mctabs[server]["txt"].see(tk.END)
                     except:
                         break
+                self.mctabs[server]["btnframe"]["run"]["state"] = "normal"
     def stop(self, server="proxy"):
         if self.running_p[server]==None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
@@ -399,7 +405,7 @@ class main(ttk.Notebook):
         #self.sent.configure('warn.TEntry', font=FONT, bordercolor="#ff0000")
         #self.sent
         self.setuplbl["text"] = "Build Minecraft Server"
-        self.btn.configure(command=self.addtab, state="enabled")
+        self.btn.configure(command=self.addtab, state="normal")
         self.namelbl = tk.Label(self.buildtab, text="Server Name", font=FONT)
         self.namelbl.grid(column=0, row=1, sticky=tk.EW, padx=10, pady=10)
         self.nameent = ttk.Entry(self.buildtab, justify=tk.CENTER, font=FONT, width=15)#, style="warn.TEntry")
