@@ -111,7 +111,7 @@ class build:
                 break
         p.wait()
         os.chdir("proxy")
-        p = subprocess.Popen(["..\\jdk\\jdk21\\bin\\java".replace("\\", "/" if OS!="Windows" else "\\"), "-Xmx512M", "-Xms512M", "-jar", "server.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
+        p = subprocess.Popen(["..\\jdk\\jdk21\\bin\\java".replace("\\", "/" if OS!="Windows" else "\\"), "-Xmx512M", "-Xms512M", "-jar", "server.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)#, shell=OS=="Windows"
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
@@ -167,7 +167,7 @@ class build:
                 break
         p.wait()
         os.chdir(name)
-        p = subprocess.Popen([self.path, f"-Xmx{ram}", f"-Xms{ram}", "-jar", f"{software}.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=OS=="Windows", text=True)
+        p = subprocess.Popen([self.path, f"-Xmx{ram}", f"-Xms{ram}", "-jar", f"{software}.jar", "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)#, shell=OS=="Windows"
         for line in iter(p.stdout.readline, ''):
             try:
                 line = line.strip()
@@ -277,7 +277,7 @@ class main(ttk.Notebook):
         self.proxytab.grid_rowconfigure(1, weight=1)
         self.btnframe = tk.Frame(self.proxytab)
         self.btnframe.grid(column=0, row=3, sticky=tk.EW)
-        self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner("proxy"), name="run").start())
+        self.proxyrun = ttk.Button(self.btnframe, text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner("proxy"), name="run", daemon=True).start())
         self.proxyrun.grid(column=0, row=0)
         self.proxyend = ttk.Button(self.btnframe, text="Stop", style='my.TButton', command=lambda: self.stop("proxy"))
         self.proxyend.grid(column=1, row=0)
@@ -296,7 +296,7 @@ class main(ttk.Notebook):
         else:
             self.select(self.mctabs[server]["frame"])
             self.mctabs[server]["btnframe"]["run"]["state"] = "disabled"
-        if OS=="Windows":
+        if False:#OS=="Windows" killがうまくいかない
             os.chdir(self.folder)
             self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if server=="proxy":
@@ -463,7 +463,7 @@ class main(ttk.Notebook):
         self.mctabs[name]["btnframe"] = {}
         self.mctabs[name]["btnframe"]["frame"] = tk.Frame(self.mctabs[name]["frame"])
         self.mctabs[name]["btnframe"]["frame"].grid(column=0, row=3, sticky=tk.EW)
-        self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run").start())
+        self.mctabs[name]["btnframe"]["run"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Run", style='my.TButton', command=lambda: threading.Thread(target=lambda: self.server_runner(name), name="run", daemon=True).start())
         self.mctabs[name]["btnframe"]["run"].grid(column=0, row=0)
         self.mctabs[name]["btnframe"]["stop"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Stop", style='my.TButton', command=lambda: self.stop(name))
         self.mctabs[name]["btnframe"]["stop"].grid(column=1, row=0)
@@ -508,7 +508,7 @@ class window(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Minecraft Server Builder")
-        self.geometry("600x360")
+        self.geometry("800x480")
         self.dialog()
         #self.bind("<Control-o>", self.dialog)
         self.title_ = ttk.Label(self, text=self.folder, font=FONT)
@@ -521,7 +521,7 @@ class window(tk.Tk):
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
         self.wait_visibility()
-        self.folder = filedialog.askdirectory(initialdir="./", title="Select a server directory")
+        self.folder = filedialog.askdirectory(initialdir="./", title="Select a server folder")
         if self.folder=="" or self.folder==():
             sys.exit()
 
