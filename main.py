@@ -296,62 +296,42 @@ class main(ttk.Notebook):
         else:
             self.select(self.mctabs[server]["frame"])
             self.mctabs[server]["btnframe"]["run"]["state"] = "disabled"
-        if False:#OS=="Windows" killがうまくいかない
-            os.chdir(self.folder)
-            self.running_p[server] = subprocess.Popen(f"{server}.cmd", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if server=="proxy":
-                for line in iter(self.running_p[server].stdout.readline, ''):
-                    try:
-                        line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
-                        self.proxylog.see(tk.END)
-                    except:
-                        break
-                self.proxyrun["state"] = "normal"
-            else:
-                for line in iter(self.running_p[server].stdout.readline, ''):
-                    try:
-                        line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.mctabs[server]["txt"], line + '\n')
-                        self.mctabs[server]["txt"].see(tk.END)
-                    except:
-                        break
-                self.mctabs[server]["btnframe"]["run"]["state"] = "normal"
+        os.chdir(self.folder)
+        with open(f"./{server}.json", "r", encoding="utf-8") as f:
+            jsondata = json.load(f)
+        p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
+        p.wait()
+        os.chdir(self.folder)
+        file = os.path.abspath(jsondata["file"])
+        os.chdir(server)
+        if server=="proxy":
+            if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
+            if not "ram" in jsondata:jsondata["ram"] = "512M"
+            self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+            for line in iter(self.running_p[server].stdout.readline, ''):
+                try:
+                    line = line.strip()
+                    self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
+                    self.proxylog.see(tk.END)
+                except:
+                    break
+            self.proxyrun["state"] = "normal"
+            self.builder.insert("", self.proxylog, "velocityを終了しました。\n")
         else:
-            os.chdir(self.folder)
-            with open(f"./{server}.json", "r", encoding="utf-8") as f:
-                jsondata = json.load(f)
-            p = subprocess.Popen([pypath, "updater.py", f"./{server}.json"], stdout=subprocess.PIPE, text=True)
-            p.wait()
-            os.chdir(self.folder)
-            file = os.path.abspath(jsondata["file"])
-            os.chdir(server)
-            if server=="proxy":
-                if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java"
-                if not "ram" in jsondata:jsondata["ram"] = "512M"
-                self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-                for line in iter(self.running_p[server].stdout.readline, ''):
-                    try:
-                        line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.proxylog, line + '\n')
-                        self.proxylog.see(tk.END)
-                    except:
-                        break
-                self.proxyrun["state"] = "normal"
-            else:
-                version = jsondata["version"]
-                software = jsondata["software"]
-                if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
-                if not "ram" in jsondata:jsondata["ram"] = "4G"
-                self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
-                for line in iter(self.running_p[server].stdout.readline, ''):
-                    try:
-                        line = line.strip()
-                        self.builder.insert(f"Running {server} Server...", self.mctabs[server]["txt"], line + '\n')
-                        self.mctabs[server]["txt"].see(tk.END)
-                    except:
-                        break
-                self.mctabs[server]["btnframe"]["run"]["state"] = "normal"
+            version = jsondata["version"]
+            software = jsondata["software"]
+            if not "jdk" in jsondata:jsondata["jdk"] = "..\\jdk\\jdk21\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk21\\bin\\java"] else "..\\jdk\\jdk17\\bin\\java" if version in self.builder.jdkpath[software]["..\\jdk\\jdk17\\bin\\java"] else "..\\jdk\\jdk11\\bin\\java"
+            if not "ram" in jsondata:jsondata["ram"] = "4G"
+            self.running_p[server] = subprocess.Popen([jsondata["jdk"], f"-Xmx{jsondata["ram"]}", f"-Xms{jsondata["ram"]}", "-jar", file, "nogui"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+            for line in iter(self.running_p[server].stdout.readline, ''):
+                try:
+                    line = line.strip()
+                    self.builder.insert(f"Running {server} Server...", self.mctabs[server]["txt"], line + '\n')
+                    self.mctabs[server]["txt"].see(tk.END)
+                except:
+                    break
+            self.mctabs[server]["btnframe"]["run"]["state"] = "normal"
+            self.builder.insert("", self.mctabs[server]["txt"], f"{server}を終了しました。\n")
     def stop(self, server="proxy"):
         if self.running_p[server]==None:
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはまだ開始されていません\n")
@@ -375,9 +355,7 @@ class main(ttk.Notebook):
             if server=="proxy":self.builder.insert("", self.proxylog, "velocityはすでに停止しています\n")
             else:self.builder.insert("", self.mctabs[server]["txt"], f"{server}はすでに停止しています\n")
             return
-        self.running_p[server].terminate()
-        #self.running_p[server].kill()
-        self.running_p[server] = None
+        self.running_p[server].kill()
     def setup(self):
         self.builder = build(app=self, folder=self.folder)
         self.pframe.grid_forget()
@@ -521,7 +499,7 @@ class window(tk.Tk):
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
         self.wait_visibility()
-        self.folder = filedialog.askdirectory(initialdir="./", title="Select a server folder")
+        self.folder = filedialog.askdirectory(initialdir=".../" if os.path.isfile("./dev") else "./", title="Select a server folder")
         if self.folder=="" or self.folder==():
             sys.exit()
 
