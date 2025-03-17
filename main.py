@@ -66,9 +66,10 @@ class build:
             app.progress0["text"]=f"Downloading {i[0]}"
             if not os.path.isdir(f"jdk/{i[0]}"):
                 app.dlstart = time.perf_counter()
-                th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=app.dlhook), name="download", daemon=True)
-                th.start()
-                th.join()
+                #th = threading.Thread(target=lambda: request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=app.dlhook), name="download", daemon=True)
+                #th.start()
+                #th.join()
+                request.urlretrieve(url=i[1], filename=f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', reporthook=app.dlhook)
                 shutil.unpack_archive(f'__cache__/{i[0]}.{"zip" if OS=="Windows" else "tar.gz"}', "jdk")
                 shutil.move(f"./jdk/{i[2]}", f"./jdk/{i[0]}")
             app.pbar0["value"]+=1
@@ -286,7 +287,7 @@ class main(ttk.Notebook):
         self.proxypanel = ttk.Frame(self.proxytab)
         self.proxypanel.grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
         #MAIN PROCESS----------------------------------------------------------
-        self.add(self.buildtab, text="BUILD")
+        self.add(self.buildtab, text="BUILD")#TODO 実行タブを増やすかBUILDタブに追加
         self.mctabs = {}
         threading.Thread(target=self.setup, name="setup", daemon=True).start()
     def server_runner(self, server="proxy"):
@@ -499,7 +500,7 @@ class window(tk.Tk):
         self.grid_rowconfigure(1, weight=1)
     def dialog(self, event=None):
         self.wait_visibility()
-        self.folder = filedialog.askdirectory(initialdir=".../" if os.path.isfile("./dev") else "./", title="Select a server folder")
+        self.folder = filedialog.askdirectory(initialdir="./", title="Select a server folder")
         if self.folder=="" or self.folder==():
             sys.exit()
 
