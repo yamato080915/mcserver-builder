@@ -235,8 +235,7 @@ class main(ttk.Notebook):
         self.dlstart = 0
         self.s = ttk.Style()
         self.s.configure('TNotebook.Tab', font=FONT)
-        self.sbtn = ttk.Style()
-        self.sbtn.configure('my.TButton', font=FONT)
+        self.s.configure('my.TButton', font=FONT)
         if OS=="Windows":
             self.si = subprocess.STARTUPINFO()
             self.si.dwFlags = subprocess.STARTF_USESHOWWINDOW
@@ -284,8 +283,10 @@ class main(ttk.Notebook):
         self.proxyend.grid(column=1, row=0)
         self.proxyend = ttk.Button(self.btnframe, text="Kill", style='my.TButton', command=lambda: self.kill("proxy"))
         self.proxyend.grid(column=2, row=0)
-        self.proxypanel = ttk.Frame(self.proxytab)
+        self.s.configure("border.TFrame", relief="solid")
+        self.proxypanel = ttk.Frame(self.proxytab, style="border.TFrame")
         self.proxypanel.grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
+        self.proxytab.grid_columnconfigure(1, weight=1)
         #MAIN PROCESS----------------------------------------------------------
         self.add(self.buildtab, text="BUILD")#TODO 実行タブを増やすかBUILDタブに追加
         self.mctabs = {}
@@ -379,10 +380,6 @@ class main(ttk.Notebook):
             self.mcbuild()
         #mcserverのフォルダを取得してタブを作成
     def mcbuild(self):
-        self.sbox = ttk.Style()
-        #self.sent = ttk.Style()
-        #self.sent.configure('warn.TEntry', font=FONT, bordercolor="#ff0000")
-        #self.sent
         self.setuplbl["text"] = "Build Minecraft Server"
         self.btn.configure(command=self.addtab, state="normal")
         self.namelbl = tk.Label(self.buildtab, text="Server Name", font=FONT)
