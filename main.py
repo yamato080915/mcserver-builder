@@ -31,6 +31,7 @@ jdkurls = {
 		#["jdk8", "https://builds.openlogic.com/downloadJDK/openlogic-openjdk/8u442-b06/openlogic-openjdk-8u442-b06-linux-x64.tar.gz", "openlogic-openjdk-8u442-b06-linux-x64"]
 		]
 }
+pls = ["GeyserMC", "Floodgate", "ViaVersion"]
 OS = platform.system()
 pypath = f'py{"thon3" if OS!="Windows" else ""}'
 
@@ -293,10 +294,58 @@ class main(ttk.Notebook):
 		self.proxypanel = ttk.Frame(self.proxytab, style="border.TFrame")
 		self.proxypanel.grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
 		self.proxytab.grid_columnconfigure(1, weight=1)
+		self.pllbl = tk.Label(self.proxypanel, text="installed")
+		self.pllbl.grid(column=0, row=0)
+		self.pllbl = tk.Label(self.proxypanel, text="plugin store")
+		self.pllbl.grid(column=1, row=0)
+		self.inspl = tk.StringVar(value=pls)
+		self.plli = tk.Listbox(self.proxypanel, width=17, listvariable=self.inspl)
+		self.plli.grid(column=0, row=1)
+		self.plli.bind("<<ListboxSelect>>", lambda event: self.delete_pl("proxy"))
+		self.inspl2 = tk.StringVar(value=pls)
+		self.plli2 = tk.Listbox(self.proxypanel, width=17, listvariable=self.inspl2)
+		self.plli2.grid(column=1, row=1)
+		self.plli2.bind("<<ListboxSelect>>", lambda event: self.install_pl("proxy"))
 		#MAIN PROCESS----------------------------------------------------------
 		self.add(self.buildtab, text="BUILD")#TODO 実行タブを増やすかBUILDタブに追加
 		self.mctabs = {}
 		threading.Thread(target=self.setup, name="setup", daemon=True).start()
+	def install_pl(self, server="proxy"):
+		if server=="proxy":
+			if self.plli2.curselection()==():
+				return
+			if self.inspl.get()=="":
+				self.inspl.set([eval(self.inspl2.get())[self.plli2.curselection()[0]]])
+			else:
+				self.inspl.set(list(set(list(eval(self.inspl.get()))+[eval(self.inspl2.get())[self.plli2.curselection()[0]]])))
+			self.inspl2.set(list(set(eval(self.inspl2.get()))-set([eval(self.inspl2.get())[self.plli2.curselection()[0]]])))
+			self.plli2.select_clear(0, tk.END)
+		else:
+			if self.mctabs[server]["panel"]["sptplli"].curselection()==():
+				return
+			if self.mctabs[server]["panel"]["var1"].get()=="":
+				self.mctabs[server]["panel"]["var1"].set([eval(self.mctabs[server]["panel"]["var2"].get())[self.mctabs[server]["panel"]["sptplli"].curselection()[0]]])
+			else:
+				self.mctabs[server]["panel"]["var1"].set(list(set(list(eval(self.mctabs[server]["panel"]["var1"].get()))+[eval(self.mctabs[server]["panel"]["var2"].get())[self.mctabs[server]["panel"]["sptplli"].curselection()[0]]])))
+			self.mctabs[server]["panel"]["var2"].set(list(set(eval(self.mctabs[server]["panel"]["var2"].get()))-set([eval(self.mctabs[server]["panel"]["var2"].get())[self.mctabs[server]["panel"]["sptplli"].curselection()[0]]])))
+
+	def delete_pl(self, server="proxy"):
+		if server=="proxy":
+			if self.plli.curselection()==():
+				return
+			if self.inspl2.get()=="":
+				self.inspl2.set([eval(self.inspl.get())[self.plli.curselection()[0]]])
+			else:
+				self.inspl2.set(list(set(list(eval(self.inspl2.get()))+[eval(self.inspl.get())[self.plli.curselection()[0]]])))
+			self.inspl.set(list(set(eval(self.inspl.get()))-set([eval(self.inspl.get())[self.plli.curselection()[0]]])))
+		else:
+			if self.mctabs[server]["panel"]["insplli"].curselection()==():
+				return
+			if self.mctabs[server]["panel"]["var2"].get()=="":
+				self.mctabs[server]["panel"]["var2"].set([eval(self.mctabs[server]["panel"]["var1"].get())[self.mctabs[server]["panel"]["insplli"].curselection()[0]]])
+			else:
+				self.mctabs[server]["panel"]["var2"].set(list(set(list(eval(self.mctabs[server]["panel"]["var2"].get()))+[eval(self.mctabs[server]["panel"]["var1"].get())[self.mctabs[server]["panel"]["insplli"].curselection()[0]]])))
+			self.mctabs[server]["panel"]["var1"].set(list(set(eval(self.mctabs[server]["panel"]["var1"].get()))-set([eval(self.mctabs[server]["panel"]["var1"].get())[self.mctabs[server]["panel"]["insplli"].curselection()[0]]])))
 	def server_runner(self, server="proxy"):
 		if server=="proxy":
 			self.select(self.proxytab)
@@ -378,13 +427,29 @@ class main(ttk.Notebook):
 		self.btn = ttk.Button(self.buildtab, text="Build", style='my.TButton', command=lambda: threading.Thread(target=self.builder.build_proxy, name="build proxy", daemon=True).start())
 		self.btn.grid(column=1, row=0, padx=10, pady=10)
 		servers = [os.path.splitext(os.path.basename(x))[0] for x in glob.glob(f"{self.folder}/*.json") if os.path.isdir(f"{self.folder}/{os.path.splitext(os.path.basename(x))[0]}") and os.path.basename(x)!="proxy.json"]
+		self.jsons = {}
+		with open(f"{self.folder}/proxy.json", "r", encoding="utf-8") as f:
+			self.jsons["proxy"] = json.load(f)
+			if not "plugins" in self.jsons.keys():
+				self.jsons["proxy"]["plugins"] = []
+		with open(f"{self.folder}/proxy.json", "w", encoding="utf-8") as f:
+			json.dump(self.jsons["proxy"], f, indent=4)
+		self.inspl.set(self.jsons["proxy"]["plugins"])
+		self.inspl2.set(list(set(pls)-set(self.jsons["proxy"]["plugins"])))
 		if os.path.isdir(f"{self.folder}/proxy"):
 			root.app.proxytab.grid(row=0, column=0, sticky=tk.NSEW)
 			root.app.add(root.app.proxytab, text="proxy")
 		for i in servers:
 			with open(f"{self.folder}/{i}.json", "r", encoding="utf-8") as f:
 				data = json.load(f)
+				self.jsons[i] = data
+				if not "plugins" in self.jsons[i].keys():
+					self.jsons[i]["plugins"] = []
 				self.addtab(name=i, software=data["software"], version=data["version"], ram=data["RAM"], bld=False)
+			with open(f"{self.folder}/{i}.json", "w", encoding="utf-8") as f:
+				json.dump(self.jsons[i], f, indent=4)
+			self.mctabs[i]["panel"]["var1"].set(self.jsons[i]["plugins"])
+			self.mctabs[i]["panel"]["var2"].set(list(set(pls)-set(self.jsons[i]["plugins"])))
 		if os.path.isdir(f"{self.folder}/proxy") or len(servers)!=0:
 			self.mcbuild()
 		#mcserverのフォルダを取得してタブを作成
@@ -455,8 +520,21 @@ class main(ttk.Notebook):
 		self.mctabs[name]["btnframe"]["kill"] = ttk.Button(self.mctabs[name]["btnframe"]["frame"], text="Kill", style='my.TButton', command=lambda: self.kill(name))
 		self.mctabs[name]["btnframe"]["kill"].grid(column=2, row=0)
 		self.mctabs[name]["panel"] = {}
-		self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"])
+		self.mctabs[name]["panel"]["frame"] = ttk.Frame(self.mctabs[name]["frame"], style="border.TFrame")
 		self.mctabs[name]["panel"]["frame"].grid(column=1, row=1, rowspan=3, sticky=tk.NSEW)
+		self.mctabs[name]["frame"].grid_columnconfigure(1, weight=1)
+		self.mctabs[name]["panel"]["inspl"] = tk.Label(self.mctabs[name]["panel"]["frame"], text="installed")
+		self.mctabs[name]["panel"]["inspl"].grid(column=0, row=0)
+		self.mctabs[name]["panel"]["sptpl"] = tk.Label(self.mctabs[name]["panel"]["frame"], text="plugin store")
+		self.mctabs[name]["panel"]["sptpl"].grid(column=1, row=0)
+		self.mctabs[name]["panel"]["var1"] = tk.StringVar(value=pls)
+		self.mctabs[name]["panel"]["insplli"] = tk.Listbox(self.mctabs[name]["panel"]["frame"], selectmode="single", width=17, listvariable=self.mctabs[name]["panel"]["var1"])
+		self.mctabs[name]["panel"]["insplli"].grid(column=0, row=1)
+		self.mctabs[name]["panel"]["insplli"].bind("<<ListboxSelect>>", lambda event: self.delete_pl(name))
+		self.mctabs[name]["panel"]["var2"] = tk.StringVar(value=pls)
+		self.mctabs[name]["panel"]["sptplli"] = tk.Listbox(self.mctabs[name]["panel"]["frame"], selectmode="single", width=17, listvariable=self.mctabs[name]["panel"]["var2"])
+		self.mctabs[name]["panel"]["sptplli"].grid(column=1, row=1)
+		self.mctabs[name]["panel"]["sptplli"].bind("<<ListboxSelect>>", lambda event: self.install_pl(name))
 		if bld:
 			self.proxyrun["state"]="disabled"
 			for i in list(self.mctabs.keys()):
